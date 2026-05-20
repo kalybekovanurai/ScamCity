@@ -1,16 +1,16 @@
 import React from "react";
 import { motion } from "motion/react";
 import { RotateCcw, Settings, Shield, User } from "lucide-react";
+
 import type { Theme } from "../types";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
+
 import {
   fetchMyProgress,
-  resetMyProgress,
   selectMyProgress,
-  selectProgressStatus,
   selectProgressError,
-  type ProgressStatus,
 } from "../modules/progress";
+import { resetProgressLocal } from "../modules/progress/progressSlice";
 
 interface ProfileViewProps {
   theme: Theme;
@@ -24,25 +24,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const dispatch = useAppDispatch();
 
   const progress = useAppSelector(selectMyProgress);
-  const status: ProgressStatus = useAppSelector(selectProgressStatus);
   const error = useAppSelector(selectProgressError);
 
   React.useEffect(() => {
     dispatch(fetchMyProgress());
   }, [dispatch]);
 
-  const handleLevelReset = async () => {
-    await dispatch(resetMyProgress());
-    dispatch(fetchMyProgress());
+  const handleLevelReset = () => {
+    dispatch(resetProgressLocal());
   };
-
-  if (status === "loading") {
-    return (
-      <div className="text-center py-10 font-bold text-slate-400">
-        Загрузка профиля...
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -51,25 +41,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   }
 
   const xp = progress?.xp ?? 0;
-  
-  // Calculate level from categoryProgress
+
   const level = progress?.categoryProgress
-    ? Math.max(...Object.keys(progress.categoryProgress).map(Number), 0)
+    ? Math.max(...Object.keys(progress.categoryProgress).map(Number), 1)
     : 1;
-  
-  // Calculate subLevel (number of completed scenarios in current level)
-  const subLevel = progress?.categoryProgress[level]?.length ?? 1;
-  
-  // Calculate correct percentage from answers
+
+  const subLevel = progress?.categoryProgress?.[level]?.length ?? 1;
+
   const totalAnswers = progress?.answers
-    ? Object.values(progress.answers).reduce((sum, stats) => sum + stats.total, 0)
+    ? Object.values(progress.answers).reduce(
+        (sum, stats) => sum + stats.total,
+        0,
+      )
     : 0;
+
   const correctAnswers = progress?.answers
-    ? Object.values(progress.answers).reduce((sum, stats) => sum + stats.correct, 0)
+    ? Object.values(progress.answers).reduce(
+        (sum, stats) => sum + stats.correct,
+        0,
+      )
     : 0;
-  const correctPercent = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
-  
-  // Determine rank based on level
+
+  const correctPercent =
+    totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+
   const getRank = (lvl: number): string => {
     if (lvl <= 1) return "Новичок";
     if (lvl <= 2) return "Помощник";
@@ -77,6 +72,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     if (lvl <= 4) return "Старший агент";
     return "Директор";
   };
+
   const rank = getRank(level);
 
   return (
@@ -217,8 +213,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
           <button
             onClick={handleLevelReset}
-            disabled={status === "loading"}
-            className={`w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.3em] transition-all border flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.3em] transition-all border flex items-center justify-center gap-3 ${
               theme === "dark"
                 ? "bg-slate-800 border-slate-700 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/50"
                 : "bg-white border-slate-200 text-rose-500 hover:bg-rose-50 shadow-sm"
