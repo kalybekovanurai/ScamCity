@@ -33,6 +33,13 @@ html,
   overflow-x: hidden;
 }
 
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary {
+  cursor: pointer;
+}
+
 .scam-city-grid {
   background-image: 
     linear-gradient(to right, rgba(139, 92, 246, 0.05) 1px, transparent 1px),

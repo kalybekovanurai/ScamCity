@@ -6,9 +6,9 @@
 import { AnimatePresence } from "motion/react";
 import { APP_ROUTES, NAV_ITEMS } from "./app/router";
 import { useGameController } from "./app/useGameController";
+import { Header } from "./components/Header";
 import { Lobby } from "./components/Lobby";
 import { MissionSelector } from "./components/MissionSelector";
-import { Navigation } from "./components/Navigation";
 import { ProfileView } from "./components/ProfileView";
 import { ProgressCenter } from "./components/ProgressCenter";
 import { ScenarioView } from "./components/ScenarioView";
@@ -26,7 +26,7 @@ export default function App() {
     >
       <div className={`pointer-events-none fixed inset-0 scam-city-grid ${game.theme === "dark" ? "opacity-10" : "opacity-20"}`} />
 
-      <Navigation
+      <Header
         theme={game.theme}
         gameState={game.gameState}
         setGameState={game.setGameState}
@@ -36,7 +36,7 @@ export default function App() {
         navItems={NAV_ITEMS}
       />
 
-      <main className="mx-auto max-w-5xl px-4 pb-24 pt-24 md:px-6">
+      <main className="mx-auto max-w-5xl px-3 pb-28 pt-24 sm:px-4 md:px-6">
         <AnimatePresence mode="wait">
           {game.gameState === APP_ROUTES.lobby.id && <Lobby theme={game.theme} setGameState={game.setGameState} />}
 
@@ -73,9 +73,15 @@ export default function App() {
               totalScenarios={game.currentLevelSession.length}
               isCorrect={game.isCorrect}
               selectedOption={game.selectedOption}
+              sessionResults={game.sessionResults}
+              sessionFeedback={game.sessionFeedback}
+              isSessionAnalyzed={game.isSessionAnalyzed}
               handleOptionSelect={game.handleOptionSelect}
               handleNextInSession={game.handleNextInSession}
+              handleBackToLevels={game.closeSessionSummary}
               setGameState={game.setGameState}
+              isAdaptiveSession={game.currentSessionSource === "ai"}
+              isLoadingNext={game.isAnalyzing}
             />
           )}
         </AnimatePresence>

@@ -25,14 +25,14 @@ export const CategoryCard = ({ theme, section, icon: Icon, locked, completed, on
     <motion.button
       type="button"
       whileHover={!locked ? { y: -2 } : {}}
-      className={`group rounded-[28px] border p-5 text-left shadow-sm transition ${
+      className={`group rounded-[28px] border p-5 text-left shadow-sm transition disabled:cursor-not-allowed ${
         locked
           ? theme === "dark"
-            ? "bg-slate-900/70 border-slate-800 opacity-55"
-            : "bg-slate-100 border-slate-200 opacity-70"
+            ? "border-slate-800 bg-slate-900/70 opacity-55"
+            : "border-slate-200 bg-slate-100 opacity-70"
           : theme === "dark"
-            ? "bg-slate-900 border-slate-800 hover:border-violet-500"
-            : "bg-white border-slate-200 hover:border-violet-300 hover:shadow-md"
+            ? "border-slate-800 bg-slate-900 hover:border-violet-500"
+            : "border-slate-200 bg-white hover:border-violet-300 hover:shadow-md"
       }`}
       disabled={locked}
       onClick={onSelect}
@@ -44,7 +44,7 @@ export const CategoryCard = ({ theme, section, icon: Icon, locked, completed, on
 
         <div className="min-w-0 flex-grow">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h4 className={`text-xl font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+            <h4 className={`break-words text-xl font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
               {section.label}
             </h4>
             <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${locked ? "bg-slate-200 text-slate-500" : "bg-slate-100 text-slate-600"}`}>

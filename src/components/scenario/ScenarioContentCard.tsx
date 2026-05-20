@@ -1,10 +1,47 @@
 import { HelpCircle, ImageOff } from "lucide-react";
 import type { Scenario, Theme } from "../../types";
+import { ChatScenario } from "./chat/ChatScenario";
 
 interface ScenarioContentCardProps {
   theme: Theme;
   scenario: Scenario;
 }
+
+const ScenarioMedia = ({ theme, scenario }: ScenarioContentCardProps) => {
+  const hasImage = scenario.image.trim().length > 0;
+
+  return (
+    <div className="h-56 overflow-hidden md:h-72">
+      {hasImage ? (
+        <img src={scenario.image} className="h-full w-full object-cover" alt="" />
+      ) : (
+        <div
+          className={`flex h-full w-full items-center justify-center ${
+            theme === "dark"
+              ? "bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.35),transparent_45%),linear-gradient(135deg,#020617,#111827)] text-slate-300"
+              : "bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.18),transparent_45%),linear-gradient(135deg,#f8fafc,#eef2ff)] text-slate-500"
+          }`}
+        >
+          <ImageOff className="h-10 w-10" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ScenarioPrompt = ({ theme, scenario }: ScenarioContentCardProps) => (
+  <div className="flex items-start gap-4">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+      <HelpCircle className="h-6 w-6" />
+    </div>
+    <div>
+      <h4 className="text-2xl font-black tracking-tight">{scenario.title}</h4>
+      <p className={`mt-2 text-base leading-relaxed ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
+        {scenario.description}
+      </p>
+    </div>
+  </div>
+);
 
 const ScenarioMessage = ({ scenario, theme }: ScenarioContentCardProps) => (
   <div
@@ -28,37 +65,17 @@ const ScenarioMessage = ({ scenario, theme }: ScenarioContentCardProps) => (
 );
 
 export const ScenarioContentCard = ({ theme, scenario }: ScenarioContentCardProps) => {
-  const hasImage = scenario.image.trim().length > 0;
+  const hasChatMessages = (scenario.content.messages?.length ?? 0) > 0;
+
+  if (hasChatMessages) {
+    return <ChatScenario scenario={scenario} theme={theme} />;
+  }
 
   return (
     <section className={`overflow-hidden rounded-[30px] border shadow-sm ${theme === "dark" ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
-      <div className="h-56 overflow-hidden md:h-72">
-        {hasImage ? (
-          <img src={scenario.image} className="h-full w-full object-cover" alt="" />
-        ) : (
-          <div
-            className={`flex h-full w-full items-center justify-center ${
-              theme === "dark"
-                ? "bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.35),transparent_45%),linear-gradient(135deg,#020617,#111827)] text-slate-300"
-                : "bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.18),transparent_45%),linear-gradient(135deg,#f8fafc,#eef2ff)] text-slate-500"
-            }`}
-          >
-            <ImageOff className="h-10 w-10" />
-          </div>
-        )}
-      </div>
+      <ScenarioMedia theme={theme} scenario={scenario} />
       <div className="space-y-5 p-5 md:p-7">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-            <HelpCircle className="h-6 w-6" />
-          </div>
-          <div>
-            <h4 className="text-2xl font-black tracking-tight">{scenario.title}</h4>
-            <p className={`mt-2 text-base leading-relaxed ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
-              {scenario.description}
-            </p>
-          </div>
-        </div>
+        <ScenarioPrompt theme={theme} scenario={scenario} />
         <ScenarioMessage theme={theme} scenario={scenario} />
       </div>
     </section>
