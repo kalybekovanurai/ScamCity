@@ -9,6 +9,7 @@ import {
   selectMyProgress,
   selectProgressStatus,
   selectProgressError,
+  type ProgressStatus,
 } from "../modules/progress";
 
 interface ProfileViewProps {
@@ -23,7 +24,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const dispatch = useAppDispatch();
 
   const progress = useAppSelector(selectMyProgress);
-  const status = useAppSelector(selectProgressStatus);
+  const status: ProgressStatus = useAppSelector(selectProgressStatus);
   const error = useAppSelector(selectProgressError);
 
   React.useEffect(() => {

@@ -4,8 +4,7 @@ type AppLanguage = "ru" | "ky";
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE_URL) ??
-  "https://nonfissile-pomaceous-anita.ngrok-free.dev/docs";
+  (import.meta.env.DEV ? "http://localhost:3000" : "https://nonfissile-pomaceous-anita.ngrok-free.dev");
 
 export const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

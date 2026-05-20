@@ -1,6 +1,6 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { fetchMyProgress, resetMyProgress } from "./progressThunk";
-import type { ProgressState, UserProgress } from "./types";
+import type { ProgressState, ProgressStatus, UserProgress } from "./types";
 
 const initialState: ProgressState = {
   data: null,
@@ -50,8 +50,8 @@ export const progressReducer = progressSlice.reducer;
 
 export const selectProgressState = (state: { progress: ProgressState }) => state.progress;
 export const selectMyProgress = createSelector(selectProgressState, (progress) => progress.data);
-export const selectProgressStatus = createSelector<[typeof selectProgressState], ProgressStatus>(
+export const selectProgressStatus = createSelector(
   selectProgressState,
-  (progress) => progress.status
+  (progress): ProgressStatus => progress.status
 );
 export const selectProgressError = createSelector(selectProgressState, (progress) => progress.error);

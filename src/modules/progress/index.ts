@@ -10,4 +10,4 @@ export {
 
 export { fetchMyProgress, resetMyProgress } from "./progressThunk";
 
-export type { UserProgress, ProgressState } from "./types";
+export type { UserProgress, ProgressState, ProgressStatus } from "./types";
