@@ -5,6 +5,7 @@ import { categoriesReducer } from "../modules/categories";
 import { levelsReducer } from "../modules/levels";
 import { progressReducer } from "../modules/progress";
 import { scenariosReducer } from "../modules/scenarios";
+import { profileReducer } from "../modules/profile";  
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     levels: levelsReducer,
     progress: progressReducer,
     scenarios: scenariosReducer,
+    profile: profileReducer,
   },
 });
 

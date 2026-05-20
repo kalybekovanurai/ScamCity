@@ -50,5 +50,8 @@ export const progressReducer = progressSlice.reducer;
 
 export const selectProgressState = (state: { progress: ProgressState }) => state.progress;
 export const selectMyProgress = createSelector(selectProgressState, (progress) => progress.data);
-export const selectProgressStatus = createSelector(selectProgressState, (progress) => progress.status);
+export const selectProgressStatus = createSelector<[typeof selectProgressState], ProgressStatus>(
+  selectProgressState,
+  (progress) => progress.status
+);
 export const selectProgressError = createSelector(selectProgressState, (progress) => progress.error);
