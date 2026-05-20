@@ -19,8 +19,12 @@ export default function App() {
   const game = useGameController();
 
   return (
-    <div className={`min-h-screen overflow-x-hidden transition-colors duration-300 ${game.theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-[#f6f8fc] text-slate-900"} font-sans selection:bg-violet-100`}>
-      <div className={`fixed inset-0 pointer-events-none scam-city-grid ${game.theme === "dark" ? "opacity-10" : "opacity-20"}`} />
+    <div
+      className={`min-h-screen overflow-x-hidden transition-colors duration-300 ${
+        game.theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-[#f6f8fc] text-slate-900"
+      } font-sans selection:bg-violet-100`}
+    >
+      <div className={`pointer-events-none fixed inset-0 scam-city-grid ${game.theme === "dark" ? "opacity-10" : "opacity-20"}`} />
 
       <Navigation
         theme={game.theme}
@@ -32,7 +36,7 @@ export default function App() {
         navItems={NAV_ITEMS}
       />
 
-      <main className="pt-24 pb-24 px-4 md:px-6 max-w-5xl mx-auto">
+      <main className="mx-auto max-w-5xl px-4 pb-24 pt-24 md:px-6">
         <AnimatePresence mode="wait">
           {game.gameState === APP_ROUTES.lobby.id && <Lobby theme={game.theme} setGameState={game.setGameState} />}
 
@@ -59,17 +63,7 @@ export default function App() {
             />
           )}
 
-          {game.gameState === APP_ROUTES.profile.id && (
-            <ProfileView
-              theme={game.theme}
-              level={game.currentLevel.level}
-              subLevel={game.currentLevel.subLevel}
-              xp={game.xp}
-              stats={game.stats}
-              setShowSettings={game.setShowSettings}
-              handleLevelReset={game.handleLevelReset}
-            />
-          )}
+          {game.gameState === APP_ROUTES.profile.id && <ProfileView theme={game.theme} setShowSettings={game.setShowSettings} />}
 
           {game.gameState === APP_ROUTES.scenario.id && game.currentScenario && (
             <ScenarioView
@@ -103,8 +97,8 @@ export default function App() {
         onClose={game.closeSessionSummary}
       />
 
-      <footer className="py-12 px-6 border-t border-white/5 text-center opacity-40">
-        <p className="text-xs uppercase tracking-[0.3em] font-bold">Training safer digital instincts • 2026 • Scam City</p>
+      <footer className="border-t border-white/5 px-6 py-12 text-center opacity-40">
+        <p className="text-xs font-bold uppercase tracking-[0.3em]">Training safer digital instincts • 2026 • Scam City</p>
       </footer>
     </div>
   );

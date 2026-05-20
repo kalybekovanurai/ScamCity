@@ -2,9 +2,12 @@ import axios, { AxiosError, type AxiosInstance } from "axios";
 
 type AppLanguage = "ru" | "ky";
 
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "http://localhost:3000" : "https://nonfissile-pomaceous-anita.ngrok-free.dev");
+  configuredApiUrl ||
+  (import.meta.env.DEV ? "" : configuredApiBaseUrl || "https://nonfissile-pomaceous-anita.ngrok-free.dev");
 
 export const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
