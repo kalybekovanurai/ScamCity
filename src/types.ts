@@ -9,6 +9,18 @@ export type ScenarioType =
 
 export type ContentType = "email" | "message" | "website" | "video" | "ad";
 
+export interface ScenarioChatMessage {
+  sender: string;
+  role?: string;
+  text: string;
+  time?: string;
+  meta?: {
+    edited?: boolean;
+    reply_to?: string | null;
+    attachment?: string | null;
+  };
+}
+
 export interface Scenario {
   id: string;
   level: number;
@@ -17,8 +29,21 @@ export interface Scenario {
   title: string;
   description: string;
   image: string;
+  difficulty?: string;
+  category?: string;
+  isScam?: boolean;
+  scenarioMode?: string;
   content: {
     type: ContentType;
+    platform?: string;
+    contentType?: string;
+    participants?: unknown[];
+    messages?: ScenarioChatMessage[];
+    attachments?: unknown[];
+    uiHints?: {
+      chatStyle?: string;
+      highlightMessageIndex?: number | null;
+    };
     data: {
       from?: string;
       subject?: string;
@@ -36,8 +61,10 @@ export interface Scenario {
     text: string;
     isCorrect: boolean;
     feedback: string;
+    actionType?: string;
   }[];
   explanation: string;
+  verificationMethods?: string[];
 }
 
 export interface CategoryProgress {

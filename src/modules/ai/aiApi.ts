@@ -19,13 +19,8 @@ const normalizeAiScenario = (data: AiScenarioResponse): Scenario => normalizeSce
 
 export const aiApi = {
   async generateScenario() {
-    try {
-      const { data } = await apiClient.post<AiScenarioResponse>("/api/ai/generate-scenario");
-      return normalizeAiScenario(data);
-    } catch {
-      const { data } = await apiClient.get<AiScenarioResponse>("/api/ai/next-scenario");
-      return normalizeAiScenario(data);
-    }
+    const { data } = await apiClient.post<AiScenarioResponse>("/api/ai/generate-scenario");
+    return normalizeAiScenario(data);
   },
 
   async getNextScenario() {

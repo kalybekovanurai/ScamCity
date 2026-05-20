@@ -10,7 +10,6 @@ import { CategoryCard } from "./missions/CategoryCard";
 import { LessonPath } from "./missions/LessonPath";
 import { MissionHeader } from "./missions/MissionHeader";
 
-
 interface MissionSelectorProps {
   theme: Theme;
   categoryProgress: CategoryProgress;
@@ -50,7 +49,7 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className="space-y-6"
+      className="space-y-5 sm:space-y-6"
     >
       <MissionHeader
         theme={theme}
@@ -63,28 +62,27 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
       {!activeCategory ? (
         <div className="grid grid-cols-1 gap-4">
           {categoriesStatus === "loading" && (
-            <div className={`rounded-[28px] border p-6 text-sm font-bold ${theme === "dark" ? "border-slate-800 bg-slate-900 text-slate-400" : "border-slate-200 bg-white text-slate-500"}`}>
+            <div className={`rounded-[24px] border p-5 text-sm font-bold sm:rounded-[28px] sm:p-6 ${theme === "dark" ? "border-slate-800 bg-slate-900 text-slate-400" : "border-slate-200 bg-white text-slate-500"}`}>
               Загружаем категории...
             </div>
           )}
 
           {categoriesStatus === "failed" && categories.length === 0 && (
-            <div className={`rounded-[28px] border p-6 text-sm font-bold ${theme === "dark" ? "border-rose-900 bg-rose-950 text-rose-200" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
+            <div className={`rounded-[24px] border p-5 text-sm font-bold sm:rounded-[28px] sm:p-6 ${theme === "dark" ? "border-rose-900 bg-rose-950 text-rose-200" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
               Не удалось загрузить категории с сервера.
             </div>
           )}
 
           {categories.map((section, index) => (
-            <React.Fragment key={section.lvl}>
-              <CategoryCard
-                theme={theme}
-                section={section}
-                icon={icons[index] ?? AlertTriangle}
-                locked={!isCategoryUnlocked(categoryProgress, section.lvl)}
-                completed={getCompletedCount(categoryProgress, section.lvl)}
-                onSelect={() => setActiveCategory(section.lvl)}
-              />
-            </React.Fragment>
+            <CategoryCard
+              key={section.lvl}
+              theme={theme}
+              section={section}
+              icon={icons[index] ?? AlertTriangle}
+              locked={!isCategoryUnlocked(categoryProgress, section.lvl)}
+              completed={getCompletedCount(categoryProgress, section.lvl)}
+              onSelect={() => setActiveCategory(section.lvl)}
+            />
           ))}
         </div>
       ) : (

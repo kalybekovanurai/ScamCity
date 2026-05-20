@@ -20,6 +20,8 @@ import {
 
 const QUESTION_XP = 10;
 const LESSON_XP = 80;
+const AI_QUESTION_XP = 25;
+const AI_LESSON_XP = 160;
 
 type SessionSource = "regular" | "ai";
 
@@ -31,6 +33,7 @@ export const useGameController = () => {
   const [gameState, setGameState] = useState<AppRouteId>(APP_ROUTES.lobby.id);
   const [theme, setTheme] = useState<Theme>("light");
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
+  const [activeSubLevel, setActiveSubLevel] = useState<number | null>(null);
   const [xp, setXp] = useState(0);
   const [categoryProgress, setCategoryProgress] = useState<CategoryProgress>(() => createEmptyProgress());
   const [answers, setAnswers] = useState<AnswersByType>(() => createEmptyAnswers());
@@ -44,6 +47,7 @@ export const useGameController = () => {
   const answerSubmitPromisesRef = useRef<Promise<unknown>[]>([]);
   const [showSessionSummary, setShowSessionSummary] = useState(false);
   const [sessionFeedback, setSessionFeedback] = useState<string | null>(null);
+  const [isSessionAnalyzed, setIsSessionAnalyzed] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
@@ -129,46 +133,49 @@ export const useGameController = () => {
     sessionResultsRef.current = [];
     answerSubmitPromisesRef.current = [];
     setSessionFeedback(null);
+    setIsSessionAnalyzed(false);
     setShowSessionSummary(false);
     startScenario(scenarios[0]);
   };
 
-  const startAiSession = async (level: number, subLevel: number, showError = true) => {
+  const startAdaptiveMission = async (
+    level = activeCategory ?? currentLevel.level,
+    subLevel = activeSubLevel ?? currentLevel.subLevel,
+  ) => {
     setIsAnalyzing(true);
     setSessionError(null);
+    setIsCorrect(null);
+    setSelectedOption(null);
 
     try {
       const scenario = await aiApi.generateScenario();
       if (!isPlayableScenario(scenario)) {
-        throw new Error("AI scenario is incomplete");
+        throw new Error("Adaptive scenario is incomplete");
       }
+
       prepareSession([{ ...scenario, level, subLevel }], "ai");
       return true;
     } catch {
-      if (showError) {
-        setSessionError("Не удалось сгенерировать AI-миссию. Попробуйте открыть следующий урок чуть позже.");
-      }
+      setSessionError("Не удалось открыть адаптивную миссию. Попробуйте еще раз чуть позже.");
       return false;
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const startLevelSession = async (level: number, subLevel: number) => {
-    if (subLevel > 1) {
-      const startedAiSession = await startAiSession(level, subLevel);
-      if (startedAiSession) return;
+  const startChatbotSession = async () => {
+    const started = await startAdaptiveMission(currentLevel.level, currentLevel.subLevel);
+    if (!started) {
+      setGameState(APP_ROUTES.levels.id);
+    }
+  };
 
-      try {
-        const fallbackScenarios = (await scenariosApi.getScenariosByLevel(subLevel)).filter(isPlayableScenario);
-        if (fallbackScenarios.length === 0) {
-          setSessionError("Для этого урока пока нет вопросов на сервере.");
-          return;
-        }
-        prepareSession(fallbackScenarios.map((scenario) => ({ ...scenario, level, subLevel })), "regular");
-      } catch {
-        setSessionError("Не удалось загрузить вопросы для следующего урока.");
-      }
+  const startLevelSession = async (level: number, subLevel: number) => {
+    setActiveCategory(level);
+    setActiveSubLevel(subLevel);
+
+    if (subLevel > 1) {
+      await startAdaptiveMission(level, subLevel);
       return;
     }
 
@@ -177,20 +184,22 @@ export const useGameController = () => {
       const levelScenarios = (await scenariosApi.getScenariosByLevel(level)).filter(isPlayableScenario);
       const exactSubLevelScenarios = levelScenarios.filter((scenario) => scenario.subLevel === subLevel);
       const scenarios = exactSubLevelScenarios.length > 0 ? exactSubLevelScenarios : levelScenarios;
+
       if (scenarios.length === 0) {
-        setSessionError("Для этого урока пока нет вопросов на сервере.");
+        setSessionError("Для первого уровня пока нет вопросов на сервере.");
         return;
       }
 
       prepareSession(scenarios.map((scenario) => ({ ...scenario, level, subLevel })), "regular");
     } catch {
-      setSessionError("Не удалось загрузить вопросы с сервера. Проверьте, что API запущен.");
+      setSessionError("Не удалось загрузить вопросы первого уровня с сервера.");
     }
   };
 
   const analyzeSession = async (results: SessionResult[]) => {
     if (results.length === 0) return;
     setIsAnalyzing(true);
+    setIsSessionAnalyzed(false);
 
     try {
       await Promise.allSettled(answerSubmitPromisesRef.current);
@@ -199,6 +208,7 @@ export const useGameController = () => {
     } catch {
       setSessionFeedback("Не удалось получить анализ с сервера. Попробуйте открыть результат позже.");
     } finally {
+      setIsSessionAnalyzed(true);
       setIsAnalyzing(false);
     }
   };
@@ -210,9 +220,12 @@ export const useGameController = () => {
       return;
     }
 
-    const alreadyCompleted = categoryProgress[session.level]?.includes(session.subLevel);
-    const nextProgress = markSubLevelCompleted(categoryProgress, session.level, session.subLevel);
-    const nextXp = alreadyCompleted ? xp : xp + LESSON_XP;
+    const sessionLevel = activeCategory ?? session.level;
+    const sessionSubLevel = activeSubLevel ?? session.subLevel;
+    const alreadyCompleted = categoryProgress[sessionLevel]?.includes(sessionSubLevel);
+    const nextProgress = markSubLevelCompleted(categoryProgress, sessionLevel, sessionSubLevel);
+    const lessonXp = currentSessionSource === "ai" ? AI_LESSON_XP : LESSON_XP;
+    const nextXp = alreadyCompleted ? xp : xp + lessonXp;
 
     setCategoryProgress(nextProgress);
     setXp(nextXp);
@@ -228,32 +241,36 @@ export const useGameController = () => {
     }
 
     const finalResults = sessionResultsRef.current;
-    const finishedSession = currentLevelSession[0];
     completeSessionIfNeeded(finalResults);
     setIsCorrect(null);
     setSelectedOption(null);
+    await Promise.allSettled(answerSubmitPromisesRef.current);
 
-    setShowSessionSummary(true);
-    analyzeSession(finalResults);
+    const nextLevel = activeCategory ?? currentLevel.level;
+    const nextSubLevel = (activeSubLevel ?? currentLevel.subLevel) + 1;
+    setActiveSubLevel(nextSubLevel);
+    await startAdaptiveMission(nextLevel, nextSubLevel);
   };
 
   const handleOptionSelect = (optionId: string) => {
-    if (isCorrect !== null || !currentScenario) return;
+    if (selectedOption !== null || !currentScenario) return;
 
     const option = currentScenario.options.find((item) => item.id === optionId);
     if (!option) return;
 
     const correctOption = currentScenario.options.find((item) => item.isCorrect) ?? option;
-    const nextAnswers = updateAnswerStats(answers, currentScenario.type, option.isCorrect);
-    const isFirstCorrect = option.isCorrect && !masteredQuestions.includes(currentScenario.id);
+    const localIsCorrect = Boolean(option.isCorrect);
+    const nextAnswers = updateAnswerStats(answers, currentScenario.type, localIsCorrect);
+    const isFirstCorrect = localIsCorrect && !masteredQuestions.includes(currentScenario.id);
     const nextMasteredQuestions = isFirstCorrect ? [...masteredQuestions, currentScenario.id] : masteredQuestions;
-    const nextXp = xp + (isFirstCorrect ? QUESTION_XP : 0);
+    const questionXp = currentSessionSource === "ai" ? AI_QUESTION_XP : QUESTION_XP;
+    const nextXp = xp + (isFirstCorrect ? questionXp : 0);
     const nextResults = [
       ...sessionResults,
       {
         id: currentScenario.id,
         title: currentScenario.title,
-        correct: option.isCorrect,
+        correct: localIsCorrect,
         selectedText: option.text,
         correctText: correctOption.text,
         explanation: currentScenario.explanation,
@@ -261,7 +278,7 @@ export const useGameController = () => {
     ];
 
     setSelectedOption(optionId);
-    setIsCorrect(option.isCorrect);
+    setIsCorrect(localIsCorrect);
     setAnswers(nextAnswers);
     setMasteredQuestions(nextMasteredQuestions);
     setXp(nextXp);
@@ -273,23 +290,32 @@ export const useGameController = () => {
       submitAnswer({
         scenarioId: currentScenario.id,
         optionId,
-        timeSpent: 15,
+        timeSpent: 12,
       }),
     )
       .unwrap()
       .catch(() => undefined);
     answerSubmitPromisesRef.current = [...answerSubmitPromisesRef.current, submitPromise];
+
+    const isLastQuestion = currentScenarioIndex >= currentLevelSession.length - 1;
+    if (isLastQuestion) {
+      void analyzeSession(nextResults);
+    }
   };
 
   const closeSessionSummary = () => {
     const finishedCategory = currentLevelSession[0]?.level ?? activeCategory;
+    const isLastQuestion = currentScenarioIndex >= currentLevelSession.length - 1;
+    if (selectedOption !== null && isLastQuestion) {
+      completeSessionIfNeeded(sessionResultsRef.current);
+    }
     setShowSessionSummary(false);
     setIsCorrect(null);
     setSelectedOption(null);
     setCurrentScenario(null);
     setCurrentLevelSession([]);
-    setGameState(APP_ROUTES.levels.id);
     setActiveCategory(finishedCategory);
+    setGameState(APP_ROUTES.levels.id);
   };
 
   return {
@@ -301,11 +327,13 @@ export const useGameController = () => {
     currentLevelSession,
     currentScenario,
     currentScenarioIndex,
+    currentSessionSource,
     gameState,
     handleLevelReset,
     handleNextInSession,
     handleOptionSelect,
     isAnalyzing,
+    isSessionAnalyzed,
     isCorrect,
     selectedOption,
     sessionFeedback,
@@ -317,6 +345,7 @@ export const useGameController = () => {
     showSessionSummary,
     showSettings,
     startLevelSession,
+    startChatbotSession,
     stats,
     theme,
     toggleTheme,

@@ -29,6 +29,19 @@ export const normalizeProgress = (raw: unknown): CategoryProgress => {
   return base;
 };
 
+export const normalizeScenarioType = (rawType?: string | null): ScenarioType => {
+  const type = (rawType ?? "").toLowerCase();
+
+  if (type.includes("social") || type.includes("telegram") || type.includes("discord") || type.includes("whatsapp")) {
+    return "social_engineering";
+  }
+  if (type.includes("info") || type.includes("webinar") || type.includes("instagram")) return "infobiz";
+  if (type.includes("deepfake") || type.includes("ai")) return "ai_deepfake";
+  if (type.includes("dark") || type.includes("security")) return "darkweb";
+
+  return "phishing";
+};
+
 export const getCompletedCount = (progress: CategoryProgress, categoryLevel: number) =>
   progress[categoryLevel]?.length ?? 0;
 
@@ -107,7 +120,7 @@ export const updateAnswerStats = (
 ) => ({
   ...answers,
   [type]: {
-    correct: answers[type].correct + (isCorrect ? 1 : 0),
-    total: answers[type].total + 1,
+    correct: (answers[type]?.correct ?? 0) + (isCorrect ? 1 : 0),
+    total: (answers[type]?.total ?? 0) + 1,
   },
 });

@@ -17,4 +17,3 @@ export const NAV_ITEMS = [
   { ...APP_ROUTES.progress, icon: Trophy },
   { ...APP_ROUTES.profile, icon: User },
 ];
-

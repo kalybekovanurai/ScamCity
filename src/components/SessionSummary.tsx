@@ -27,15 +27,15 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
 
   return (
     <Modal open={showSessionSummary} theme={theme} className="max-w-2xl" zIndex="z-[120]">
-      <div className={`px-6 py-7 md:px-8 ${allCorrect ? "bg-emerald-600" : "bg-amber-500"} text-white`}>
+      <div className={`px-4 py-6 sm:px-6 sm:py-7 md:px-8 ${allCorrect ? "bg-emerald-600" : "bg-amber-500"} text-white`}>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="mb-2 text-sm font-bold opacity-85">{allCorrect ? "Урок засчитан" : "Урок можно повторить"}</p>
             <h4 className="text-2xl font-black tracking-tight md:text-3xl">Миссия завершена</h4>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {sessionResults.map((result, i) => (
-              <div key={i} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/18 ring-1 ring-white/25">
+              <div key={i} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/18 ring-1 ring-white/25 sm:h-11 sm:w-11">
                 {result.correct ? <CheckCircle2 className="h-6 w-6" /> : <XCircle className="h-6 w-6" />}
               </div>
             ))}
@@ -43,16 +43,16 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
         </div>
       </div>
 
-      <div className="space-y-6 p-6 md:p-8">
-        <div className={`rounded-3xl border p-5 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
-          <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="space-y-5 p-4 sm:space-y-6 sm:p-6 md:p-8">
+        <div className={`rounded-[24px] border p-4 sm:rounded-3xl sm:p-5 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+          <div className="mb-4 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
             <div>
               <h5 className="text-lg font-black">Итог урока</h5>
               <p className="text-sm text-slate-500">
                 Правильных ответов: {correctCount} из {sessionResults.length}
               </p>
             </div>
-            <div className={`rounded-2xl px-4 py-2 text-sm font-black ${allCorrect ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+            <div className={`w-fit rounded-2xl px-4 py-2 text-sm font-black ${allCorrect ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
               {allCorrect ? "Отлично" : "Повторить"}
             </div>
           </div>
@@ -63,22 +63,22 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
               Анализируем ответы...
             </div>
           ) : (
-            <p className={`rounded-2xl p-4 text-base font-semibold leading-relaxed ${theme === "dark" ? "bg-slate-900 text-slate-100" : "bg-white text-slate-700"}`}>
+            <p className={`rounded-2xl p-4 text-sm font-semibold leading-relaxed sm:text-base ${theme === "dark" ? "bg-slate-900 text-slate-100" : "bg-white text-slate-700"}`}>
               {sessionFeedback}
             </p>
           )}
         </div>
 
         {wrongResults.length > 0 && (
-          <div className={`rounded-3xl border p-5 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+          <div className={`rounded-[24px] border p-4 sm:rounded-3xl sm:p-5 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
             <h5 className="mb-4 text-lg font-black">На что обратить внимание</h5>
             <div className="space-y-3">
               {wrongResults.map((result) => (
                 <div key={result.id} className={`rounded-2xl p-4 ${theme === "dark" ? "bg-slate-900" : "bg-slate-50"}`}>
-                  <p className="font-black">{result.title}</p>
-                  <p className="mt-2 text-sm text-slate-500">Ваш ответ: {result.selectedText}</p>
-                  <p className="mt-1 text-sm font-semibold text-emerald-600">Безопаснее: {result.correctText}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{result.explanation}</p>
+                  <p className="break-words font-black">{result.title}</p>
+                  <p className="mt-2 break-words text-sm text-slate-500">Ваш ответ: {result.selectedText}</p>
+                  <p className="mt-1 break-words text-sm font-semibold text-emerald-600">Безопаснее: {result.correctText}</p>
+                  <p className="mt-2 break-words text-sm leading-relaxed text-slate-500">{result.explanation}</p>
                 </div>
               ))}
             </div>

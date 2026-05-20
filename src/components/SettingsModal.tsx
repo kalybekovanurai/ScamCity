@@ -15,62 +15,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   showSettings,
   setShowSettings,
   toggleTheme,
-}) => {
-  return (
-    <AnimatePresence>
-      {showSettings && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowSettings(false)}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className={`relative w-full max-w-sm p-8 rounded-[40px] border shadow-2xl ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"}`}
-          >
-            <div className="flex items-center justify-between mb-8">
-              <h4 className="text-xl font-black uppercase tracking-tighter">Настройки</h4>
-              <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors" aria-label="Закрыть">
-                <XCircle className="w-6 h-6 text-slate-400" />
+}) => (
+  <AnimatePresence>
+    {showSettings && (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowSettings(false)}
+          className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className={`relative max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-[28px] border p-5 shadow-2xl sm:rounded-[36px] sm:p-8 ${
+            theme === "dark" ? "border-slate-800 bg-slate-900" : "border-slate-100 bg-white"
+          }`}
+        >
+          <div className="mb-7 flex items-center justify-between gap-4 sm:mb-8">
+            <h4 className="text-lg font-black uppercase tracking-tighter sm:text-xl">Настройки</h4>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="rounded-full p-2 transition-colors hover:bg-slate-100"
+              aria-label="Закрыть"
+            >
+              <XCircle className="h-6 w-6 text-slate-400" />
+            </button>
+          </div>
+
+          <div className="space-y-5 sm:space-y-6">
+            <div className={`flex items-center justify-between gap-4 rounded-2xl border p-4 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+              <div className="flex min-w-0 items-center gap-3">
+                {theme === "dark" ? <Moon className="h-5 w-5 shrink-0 text-violet-400" /> : <Sun className="h-5 w-5 shrink-0 text-amber-500" />}
+                <span className="text-xs font-bold uppercase tracking-wider">Темная тема</span>
+              </div>
+              <button
+                onClick={toggleTheme}
+                className={`h-6 w-12 shrink-0 rounded-full p-1 transition-all ${theme === "dark" ? "bg-violet-600" : "bg-slate-200"}`}
+                aria-label="Переключить тему"
+              >
+                <div className={`h-4 w-4 rounded-full bg-white transition-all ${theme === "dark" ? "translate-x-6" : "translate-x-0"}`} />
               </button>
             </div>
 
-            <div className="space-y-6">
-              <div className={`flex items-center justify-between p-4 rounded-2xl border ${theme === "dark" ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"}`}>
-                <div className="flex items-center gap-3">
-                  {theme === "dark" ? <Moon className="w-5 h-5 text-violet-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
-                  <span className="text-xs font-bold uppercase tracking-wider">Темная тема</span>
-                </div>
-                <button
-                  onClick={toggleTheme}
-                  className={`w-12 h-6 rounded-full p-1 transition-all ${theme === "dark" ? "bg-violet-600" : "bg-slate-200"}`}
-                  aria-label="Переключить тему"
-                >
-                  <div className={`w-4 h-4 rounded-full bg-white transition-all ${theme === "dark" ? "translate-x-6" : "translate-x-0"}`} />
-                </button>
-              </div>
-
-              <div className={`p-4 rounded-2xl border ${theme === "dark" ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"}`}>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Системный статус</p>
-                <p className="text-xs font-medium leading-relaxed">Прогресс сохраняется локально в браузере. Урок засчитывается только если все вопросы решены верно.</p>
-              </div>
+            <div className={`rounded-2xl border p-4 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Системный статус</p>
+              <p className="text-xs font-medium leading-relaxed">
+                Прогресс сохраняется локально в браузере. Урок засчитывается только если все вопросы решены верно.
+              </p>
             </div>
+          </div>
 
-            <button
-              onClick={() => setShowSettings(false)}
-              className="w-full mt-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-violet-600 transition-all"
-            >
-              Готово
-            </button>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-};
-
+          <button
+            onClick={() => setShowSettings(false)}
+            className="mt-7 w-full rounded-2xl bg-slate-900 py-4 text-xs font-black uppercase tracking-[0.22em] text-white transition-all hover:bg-violet-600 sm:mt-8 sm:tracking-[0.3em]"
+          >
+            Готово
+          </button>
+        </motion.div>
+      </div>
+    )}
+  </AnimatePresence>
+);
