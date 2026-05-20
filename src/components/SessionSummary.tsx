@@ -30,10 +30,8 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
       <div className={`px-6 py-7 md:px-8 ${allCorrect ? "bg-emerald-600" : "bg-amber-500"} text-white`}>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="mb-2 text-sm font-bold opacity-85">
-              {allCorrect ? "Урок засчитан" : "Урок можно повторить"}
-            </p>
-            <h4 className="text-2xl md:text-3xl font-black tracking-tight">Миссия завершена</h4>
+            <p className="mb-2 text-sm font-bold opacity-85">{allCorrect ? "Урок засчитан" : "Урок можно повторить"}</p>
+            <h4 className="text-2xl font-black tracking-tight md:text-3xl">Миссия завершена</h4>
           </div>
           <div className="flex gap-2">
             {sessionResults.map((result, i) => (
@@ -46,11 +44,13 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
       </div>
 
       <div className="space-y-6 p-6 md:p-8">
-        <div className={`rounded-3xl border p-5 ${theme === "dark" ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"}`}>
+        <div className={`rounded-3xl border p-5 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h5 className="text-lg font-black">Итог урока</h5>
-              <p className="text-sm text-slate-500">Правильных ответов: {correctCount} из {sessionResults.length}</p>
+              <p className="text-sm text-slate-500">
+                Правильных ответов: {correctCount} из {sessionResults.length}
+              </p>
             </div>
             <div className={`rounded-2xl px-4 py-2 text-sm font-black ${allCorrect ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
               {allCorrect ? "Отлично" : "Повторить"}
@@ -70,7 +70,7 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
         </div>
 
         {wrongResults.length > 0 && (
-          <div className={`rounded-3xl border p-5 ${theme === "dark" ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+          <div className={`rounded-3xl border p-5 ${theme === "dark" ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
             <h5 className="mb-4 text-lg font-black">На что обратить внимание</h5>
             <div className="space-y-3">
               {wrongResults.map((result) => (
@@ -93,4 +93,3 @@ export const SessionSummary: React.FC<SessionSummaryProps> = ({
     </Modal>
   );
 };
-

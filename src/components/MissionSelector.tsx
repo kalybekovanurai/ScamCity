@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "motion/react";
 import { AlertTriangle, Brain, MessageSquare, Terminal, Trophy } from "lucide-react";
 import { APP_ROUTES } from "../app/router";
-import { CATEGORIES } from "../data/categories";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { fetchCategories, selectCategories, selectCategoriesStatus } from "../modules/categories";
 import type { CategoryProgress, Theme } from "../types";
 import { getCompletedCount, isCategoryUnlocked } from "../utils/progress";
 import { CategoryCard } from "./missions/CategoryCard";
 import { LessonPath } from "./missions/LessonPath";
 import { MissionHeader } from "./missions/MissionHeader";
+
 
 interface MissionSelectorProps {
   theme: Theme;
@@ -16,6 +18,7 @@ interface MissionSelectorProps {
   setActiveCategory: (lvl: number | null) => void;
   setGameState: (state: any) => void;
   startLevelSession: (lvl: number, sLvl: number) => void;
+  sessionError: string | null;
 }
 
 const icons = [AlertTriangle, MessageSquare, Trophy, Brain, Terminal];
@@ -27,10 +30,20 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
   setActiveCategory,
   setGameState,
   startLevelSession,
+  sessionError,
 }) => {
-  const active = CATEGORIES.find((category) => category.lvl === activeCategory);
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector(selectCategories);
+  const categoriesStatus = useAppSelector(selectCategoriesStatus);
+  const active = categories.find((category) => category.lvl === activeCategory);
   const title = active?.label ?? "Миссии";
   const completedInActive = activeCategory ? getCompletedCount(categoryProgress, activeCategory) : 0;
+
+  useEffect(() => {
+    if (categoriesStatus === "idle") {
+      void dispatch(fetchCategories());
+    }
+  }, [categoriesStatus, dispatch]);
 
   return (
     <motion.div
@@ -49,12 +62,24 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
 
       {!activeCategory ? (
         <div className="grid grid-cols-1 gap-4">
-          {CATEGORIES.map((section, index) => (
+          {categoriesStatus === "loading" && (
+            <div className={`rounded-[28px] border p-6 text-sm font-bold ${theme === "dark" ? "border-slate-800 bg-slate-900 text-slate-400" : "border-slate-200 bg-white text-slate-500"}`}>
+              Загружаем категории...
+            </div>
+          )}
+
+          {categoriesStatus === "failed" && categories.length === 0 && (
+            <div className={`rounded-[28px] border p-6 text-sm font-bold ${theme === "dark" ? "border-rose-900 bg-rose-950 text-rose-200" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
+              Не удалось загрузить категории с сервера.
+            </div>
+          )}
+
+          {categories.map((section, index) => (
             <React.Fragment key={section.lvl}>
               <CategoryCard
                 theme={theme}
                 section={section}
-                icon={icons[index]}
+                icon={icons[index] ?? AlertTriangle}
                 locked={!isCategoryUnlocked(categoryProgress, section.lvl)}
                 completed={getCompletedCount(categoryProgress, section.lvl)}
                 onSelect={() => setActiveCategory(section.lvl)}
@@ -63,12 +88,19 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
           ))}
         </div>
       ) : (
-        <LessonPath
-          theme={theme}
-          activeCategory={activeCategory}
-          categoryProgress={categoryProgress}
-          startLevelSession={startLevelSession}
-        />
+        <div className="space-y-4">
+          {sessionError && (
+            <div className={`rounded-2xl border p-4 text-sm font-bold ${theme === "dark" ? "border-amber-900 bg-amber-950 text-amber-200" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+              {sessionError}
+            </div>
+          )}
+          <LessonPath
+            theme={theme}
+            activeCategory={activeCategory}
+            categoryProgress={categoryProgress}
+            startLevelSession={startLevelSession}
+          />
+        </div>
       )}
     </motion.div>
   );

@@ -21,6 +21,16 @@ export default defineConfig(({mode}) => {
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      proxy: {
+        '/api': {
+          target: env.VITE_API_BASE_URL || 'https://nonfissile-pomaceous-anita.ngrok-free.dev',
+          changeOrigin: true,
+          secure: true,
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        },
+      },
     },
   };
 });

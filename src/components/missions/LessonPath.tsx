@@ -1,5 +1,5 @@
 import { CheckCircle2, Lock, Play } from "lucide-react";
-import { LEVELS_PER_CATEGORY } from "../../data/categories";
+import { LEVELS_PER_CATEGORY } from "../../config/levels";
 import type { CategoryProgress, Theme } from "../../types";
 import { getNextSubLevel, isSubLevelCompleted, isSubLevelUnlocked } from "../../utils/progress";
 

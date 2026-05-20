@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { LEVELS_PER_CATEGORY } from "../../data/categories";
+import { LEVELS_PER_CATEGORY } from "../../config/levels";
 import type { Theme } from "../../types";
 
 interface MissionHeaderProps {
@@ -43,4 +43,3 @@ export const MissionHeader = ({
     </div>
   </div>
 );
-

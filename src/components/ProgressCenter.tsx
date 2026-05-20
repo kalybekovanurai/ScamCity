@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
-import { CATEGORIES, LEVELS_PER_CATEGORY } from "../data/categories";
+import { LEVELS_PER_CATEGORY } from "../config/levels";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { fetchCategories, selectCategories, selectCategoriesStatus } from "../modules/categories";
 import type { AnswersByType, CategoryProgress, Theme } from "../types";
 import { getCompletedCount } from "../utils/progress";
 
@@ -22,31 +24,41 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
   answers,
   stats,
 }) => {
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector(selectCategories);
+  const categoriesStatus = useAppSelector(selectCategoriesStatus);
+
+  useEffect(() => {
+    if (categoriesStatus === "idle") {
+      void dispatch(fetchCategories());
+    }
+  }, [categoriesStatus, dispatch]);
+
   return (
     <motion.div
       key="progress"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto space-y-6"
+      className="mx-auto max-w-4xl space-y-6"
     >
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
+      <div className="flex flex-col items-center justify-between gap-6 px-2 md:flex-row">
         <h3 className="text-2xl font-black uppercase tracking-tight">Центр прогресса</h3>
-        <div className={`px-3 py-1.5 rounded-lg border shadow-sm text-[9px] font-black uppercase tracking-widest ${theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-400"}`}>
+        <div className={`rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest shadow-sm ${theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-400"}`}>
           Статус: <span className="text-emerald-500">активен</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mx-2 md:mx-0">
-        <div className={`p-10 rounded-3xl border relative overflow-hidden flex flex-col items-center text-center ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
-          <span className={`text-[9px] font-black uppercase tracking-[0.3em] mb-6 block ${theme === "dark" ? "text-slate-500" : "text-slate-300"}`}>Индекс бдительности</span>
-          <div className="relative w-32 h-32 mb-6">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle cx="64" cy="64" r="58" className={`stroke-[10] fill-none ${theme === "dark" ? "stroke-slate-800" : "stroke-slate-100"}`} />
+      <div className="mx-2 grid grid-cols-1 gap-4 md:mx-0 md:grid-cols-2">
+        <div className={`relative flex flex-col items-center overflow-hidden rounded-3xl border p-10 text-center ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
+          <span className={`mb-6 block text-[9px] font-black uppercase tracking-[0.3em] ${theme === "dark" ? "text-slate-500" : "text-slate-300"}`}>Индекс бдительности</span>
+          <div className="relative mb-6 h-32 w-32">
+            <svg className="h-full w-full -rotate-90">
+              <circle cx="64" cy="64" r="58" className={`fill-none stroke-[10] ${theme === "dark" ? "stroke-slate-800" : "stroke-slate-100"}`} />
               <motion.circle
                 cx="64"
                 cy="64"
                 r="58"
-                className="stroke-violet-600 stroke-[10] fill-none"
+                className="fill-none stroke-violet-600 stroke-[10]"
                 style={{ strokeDasharray: "364", strokeLinecap: "round" }}
                 animate={{ strokeDashoffset: 364 - (stats.integrity / 100) * 364 }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
@@ -54,64 +66,68 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <span className={`text-3xl font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}>{stats.integrity}%</span>
-              <span className="text-[9px] font-black text-slate-400 uppercase">Secure</span>
+              <span className="text-[9px] font-black uppercase text-slate-400">Secure</span>
             </div>
           </div>
-          <p className={`${theme === "dark" ? "text-slate-400" : "text-slate-500"} text-xs font-medium leading-relaxed max-w-[220px]`}>
-            Показатель растет, когда вы проходите уроки и отвечаете без ошибок.
+          <p className={`${theme === "dark" ? "text-slate-400" : "text-slate-500"} max-w-[220px] text-xs font-medium leading-relaxed`}>
+            Показатель растёт, когда вы проходите уроки и тренируете внимательность.
           </p>
         </div>
 
-        <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl space-y-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-5">
+        <div className="relative space-y-6 overflow-hidden rounded-3xl bg-slate-900 p-8 text-white shadow-xl">
+          <div className="absolute right-0 top-0 p-6 opacity-5">
             <Trophy size={120} />
           </div>
-          <h4 className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Сводка</h4>
-          <div className="grid grid-cols-2 gap-y-8 gap-x-4 relative z-10">
+          <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Сводка</h4>
+          <div className="relative z-10 grid grid-cols-2 gap-x-4 gap-y-8">
             <div className="space-y-0.5">
-              <span className="text-2xl font-black block">{stats.scenariosSolved}</span>
-              <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">ответов</span>
+              <span className="block text-2xl font-black">{stats.scenariosSolved}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/40">ответов</span>
             </div>
             <div className="space-y-0.5">
-              <span className="text-2xl font-black block truncate">{stats.correctPercent}%</span>
-              <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">точность</span>
+              <span className="block truncate text-2xl font-black">{stats.correctPercent}%</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/40">точность</span>
             </div>
             <div className="space-y-0.5">
-              <span className="text-2xl font-black block">{xp}</span>
-              <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">XP</span>
+              <span className="block text-2xl font-black">{xp}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/40">XP</span>
             </div>
             <div className="space-y-0.5">
-              <span className="text-2xl font-black block">LVL {currentLevel.level}-{currentLevel.subLevel}</span>
-              <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">следующий</span>
+              <span className="block text-2xl font-black">LVL {currentLevel.level}-{currentLevel.subLevel}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/40">следующий</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className={`rounded-3xl border p-8 shadow-sm mx-2 md:mx-0 ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}>
-        <h4 className="text-lg font-black mb-8 uppercase tracking-tighter">Категории</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-          {CATEGORIES.map((category) => {
+      <div className={`mx-2 rounded-3xl border p-8 shadow-sm md:mx-0 ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}>
+        <h4 className="mb-8 text-lg font-black uppercase tracking-tighter">Категории</h4>
+
+        {categoriesStatus === "loading" && <p className="text-sm font-bold text-slate-500">Загружаем категории...</p>}
+        {categoriesStatus === "failed" && categories.length === 0 && <p className="text-sm font-bold text-rose-500">Не удалось загрузить категории с сервера.</p>}
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+          {categories.map((category) => {
             const completed = getCompletedCount(categoryProgress, category.lvl);
             const typeStats = answers[category.type];
             const accuracy = typeStats.total === 0 ? 0 : Math.round((typeStats.correct / typeStats.total) * 100);
 
             return (
               <div key={category.lvl} className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm ${completed > 0 ? "bg-violet-600 text-white" : theme === "dark" ? "bg-slate-800 text-slate-500" : "bg-slate-100 text-slate-300"}`}>
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-black ${completed > 0 ? "bg-violet-600 text-white" : theme === "dark" ? "bg-slate-800 text-slate-500" : "bg-slate-100 text-slate-300"}`}>
                   {completed}
                 </div>
-                <div className="pt-0.5 flex-grow">
+                <div className="flex-grow pt-0.5">
                   <div className="flex items-center justify-between gap-3">
-                    <h5 className={`font-black text-xs md:text-sm uppercase tracking-tight ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                    <h5 className={`text-xs font-black uppercase tracking-tight md:text-sm ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
                       {category.label}
                     </h5>
-                    <span className="text-[10px] text-slate-400 font-black">{accuracy}%</span>
+                    <span className="text-[10px] font-black text-slate-400">{accuracy}%</span>
                   </div>
-                  <p className="text-slate-500 text-[10px] md:text-xs mt-1.5 leading-relaxed">
+                  <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500 md:text-xs">
                     {completed}/{LEVELS_PER_CATEGORY} уроков, {typeStats.total} ответов
                   </p>
-                  <div className={`mt-3 h-2 rounded-full overflow-hidden ${theme === "dark" ? "bg-slate-800" : "bg-slate-100"}`}>
+                  <div className={`mt-3 h-2 overflow-hidden rounded-full ${theme === "dark" ? "bg-slate-800" : "bg-slate-100"}`}>
                     <div className="h-full bg-violet-600" style={{ width: `${(completed / LEVELS_PER_CATEGORY) * 100}%` }} />
                   </div>
                 </div>
@@ -123,4 +139,3 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
     </motion.div>
   );
 };
-

@@ -1,6 +1,6 @@
 import { ChevronRight, Lock, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
-import { LEVELS_PER_CATEGORY } from "../../data/categories";
+import { LEVELS_PER_CATEGORY } from "../../config/levels";
 import type { Theme } from "../../types";
 import { accentClasses } from "./missionStyles";
 
@@ -64,4 +64,3 @@ export const CategoryCard = ({ theme, section, icon: Icon, locked, completed, on
     </motion.button>
   );
 };
-

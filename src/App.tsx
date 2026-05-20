@@ -44,6 +44,7 @@ export default function App() {
               setActiveCategory={game.setActiveCategory}
               setGameState={game.setGameState}
               startLevelSession={game.startLevelSession}
+              sessionError={game.sessionError}
             />
           )}
 
@@ -108,4 +109,3 @@ export default function App() {
     </div>
   );
 }
-

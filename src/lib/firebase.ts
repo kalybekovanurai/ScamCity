@@ -1,5 +1,9 @@
 import { initializeApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+
+const isConfiguredValue = (value: string | undefined) =>
+  Boolean(value && !value.startsWith("MY_"));
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -10,5 +14,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-export const firebaseApp = initializeApp(firebaseConfig);
-export const firestore = getFirestore(firebaseApp);
+export const isFirebaseConfigured =
+  isConfiguredValue(firebaseConfig.apiKey) &&
+  isConfiguredValue(firebaseConfig.authDomain) &&
+  isConfiguredValue(firebaseConfig.appId);
+
+export const firebaseApp = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
+export const auth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null;
+export const firestore = firebaseApp ? getFirestore(firebaseApp) : null;

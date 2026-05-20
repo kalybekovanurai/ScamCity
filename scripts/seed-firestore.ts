@@ -1,11 +1,13 @@
 import "dotenv/config";
 import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore, type WriteBatch } from "firebase-admin/firestore";
-import { CATEGORIES, LEVELS_PER_CATEGORY } from "../src/data/categories";
-import { SCENARIOS } from "../src/data/scenarios";
+import { LEVELS_PER_CATEGORY } from "../src/config/levels";
+import type { Category } from "../src/modules/categories";
+import type { Scenario } from "../src/types";
 
 const projectId = process.env.FIREBASE_PROJECT_ID ?? "scamcity-c2cf1";
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+const apiBaseUrl = process.env.VITE_API_BASE_URL ?? "https://nonfissile-pomaceous-anita.ngrok-free.dev";
 
 initializeApp({
   credential: serviceAccountJson ? cert(JSON.parse(serviceAccountJson)) : applicationDefault(),
@@ -22,7 +24,24 @@ const commitInBatches = async <T>(items: T[], writeItem: (batch: WriteBatch, ite
   }
 };
 
-await commitInBatches(CATEGORIES, (batch, category) => {
+const getJson = async <T>(path: string): Promise<T> => {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    headers: {
+      "ngrok-skip-browser-warning": "true",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${path}: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<T>;
+};
+
+const categories = await getJson<Category[]>("/api/categories");
+const scenarios = await getJson<Scenario[]>("/api/scenarios");
+
+await commitInBatches(categories, (batch, category) => {
   batch.set(db.collection("categories").doc(String(category.lvl)), {
     ...category,
     levelsPerCategory: LEVELS_PER_CATEGORY,
@@ -30,7 +49,7 @@ await commitInBatches(CATEGORIES, (batch, category) => {
   });
 });
 
-await commitInBatches(SCENARIOS, (batch, scenario) => {
+await commitInBatches(scenarios, (batch, scenario) => {
   batch.set(db.collection("scenarios").doc(scenario.id), {
     ...scenario,
     updatedAt: new Date().toISOString(),
@@ -38,10 +57,10 @@ await commitInBatches(SCENARIOS, (batch, scenario) => {
 });
 
 await db.collection("meta").doc("content").set({
-  categoriesCount: CATEGORIES.length,
-  scenariosCount: SCENARIOS.length,
+  categoriesCount: categories.length,
+  scenariosCount: scenarios.length,
   levelsPerCategory: LEVELS_PER_CATEGORY,
   updatedAt: new Date().toISOString(),
 });
 
-console.log(`Seeded ${CATEGORIES.length} categories and ${SCENARIOS.length} scenarios to Firestore.`);
+console.log(`Seeded ${categories.length} categories and ${scenarios.length} scenarios to Firestore.`);

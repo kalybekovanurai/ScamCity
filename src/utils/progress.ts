@@ -1,8 +1,8 @@
-import { CATEGORIES, LEVELS_PER_CATEGORY } from "../data/categories";
+import { CATEGORY_LEVELS, LEVELS_PER_CATEGORY } from "../config/levels";
 import type { AnswersByType, CategoryProgress, ScenarioType } from "../types";
 
 export const createEmptyProgress = (): CategoryProgress =>
-  Object.fromEntries(CATEGORIES.map((category) => [category.lvl, []]));
+  Object.fromEntries(CATEGORY_LEVELS.map((level) => [level, []]));
 
 export const createEmptyAnswers = (): AnswersByType => ({
   phishing: { correct: 0, total: 0 },
@@ -16,11 +16,11 @@ export const normalizeProgress = (raw: unknown): CategoryProgress => {
   const base = createEmptyProgress();
   if (!raw || typeof raw !== "object") return base;
 
-  for (const category of CATEGORIES) {
-    const value = (raw as Record<string, unknown>)[String(category.lvl)] ?? (raw as Record<number, unknown>)[category.lvl];
+  for (const level of CATEGORY_LEVELS) {
+    const value = (raw as Record<string, unknown>)[String(level)] ?? (raw as Record<number, unknown>)[level];
     if (!Array.isArray(value)) continue;
 
-    base[category.lvl] = value
+    base[level] = value
       .filter((level): level is number => Number.isInteger(level) && level >= 1 && level <= LEVELS_PER_CATEGORY)
       .filter((level, index, list) => list.indexOf(level) === index)
       .sort((a, b) => a - b);
@@ -73,14 +73,14 @@ export const markSubLevelCompleted = (
 };
 
 export const getTotalCompletedLevels = (progress: CategoryProgress) =>
-  CATEGORIES.reduce((total, category) => total + getCompletedCount(progress, category.lvl), 0);
+  CATEGORY_LEVELS.reduce((total, level) => total + getCompletedCount(progress, level), 0);
 
 export const getCurrentLevelLabel = (progress: CategoryProgress) => {
-  const category = CATEGORIES.find((item) => isCategoryUnlocked(progress, item.lvl) && getCompletedCount(progress, item.lvl) < LEVELS_PER_CATEGORY)
-    ?? CATEGORIES[CATEGORIES.length - 1];
+  const level = CATEGORY_LEVELS.find((item) => isCategoryUnlocked(progress, item) && getCompletedCount(progress, item) < LEVELS_PER_CATEGORY)
+    ?? CATEGORY_LEVELS[CATEGORY_LEVELS.length - 1];
   return {
-    level: category.lvl,
-    subLevel: getNextSubLevel(progress, category.lvl),
+    level,
+    subLevel: getNextSubLevel(progress, level),
   };
 };
 
@@ -111,4 +111,3 @@ export const updateAnswerStats = (
     total: answers[type].total + 1,
   },
 });
-

@@ -1,6 +1,8 @@
 import React from "react";
 import { motion } from "motion/react";
 import { APP_ROUTES } from "../app/router";
+import { useAppSelector } from "../app/hooks";
+import { selectLastAnswerSubmission } from "../modules/answers";
 import type { Scenario, Theme } from "../types";
 import { AnswerFeedbackModal } from "./scenario/AnswerFeedbackModal";
 import { AnswerPanel } from "./scenario/AnswerPanel";
@@ -30,6 +32,8 @@ export const ScenarioView: React.FC<ScenarioViewProps> = ({
   handleNextInSession,
   setGameState,
 }) => {
+  const answerFeedback = useAppSelector(selectLastAnswerSubmission);
+
   return (
     <motion.div
       key="scenario"
@@ -61,6 +65,7 @@ export const ScenarioView: React.FC<ScenarioViewProps> = ({
         scenario={currentScenario}
         isCorrect={isCorrect}
         selectedOption={selectedOption}
+        answerFeedback={answerFeedback}
         isLastQuestion={currentScenarioIndex >= totalScenarios - 1}
         onNext={handleNextInSession}
       />
