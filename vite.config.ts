@@ -23,7 +23,7 @@ export default defineConfig(({mode}) => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL || 'https://nonfissile-pomaceous-anita.ngrok-free.dev',
+          target: env.VITE_API_BASE_URL || env.VITE_API_URL || 'https://nonfissile-pomaceous-anita.ngrok-free.dev',
           changeOrigin: true,
           secure: true,
           headers: {

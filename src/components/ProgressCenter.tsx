@@ -59,7 +59,8 @@ export const ProgressCenter: React.FC<ProgressCenterProps> = ({
                 cy="64"
                 r="58"
                 className="fill-none stroke-violet-600 stroke-[10]"
-                style={{ strokeDasharray: "364", strokeLinecap: "round" }}
+                initial={{ strokeDashoffset: 364 }}
+                style={{ strokeDasharray: 364, strokeDashoffset: 364, strokeLinecap: "round" }}
                 animate={{ strokeDashoffset: 364 - (stats.integrity / 100) * 364 }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
               />
