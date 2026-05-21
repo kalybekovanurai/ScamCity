@@ -7,7 +7,18 @@ export type ScenarioType =
   | "ai_deepfake"
   | "darkweb";
 
-export type ContentType = "email" | "message" | "website" | "video" | "ad";
+export type ContentType = "email" | "message" | "website" | "video" | "audio" | "ad";
+
+export type MediaKind = "image" | "audio" | "video" | "file";
+
+export interface ScenarioMediaAttachment {
+  type?: MediaKind | string;
+  url?: string;
+  src?: string;
+  title?: string;
+  name?: string;
+  mimeType?: string;
+}
 
 export interface ScenarioChatMessage {
   sender: string;
@@ -17,7 +28,7 @@ export interface ScenarioChatMessage {
   meta?: {
     edited?: boolean;
     reply_to?: string | null;
-    attachment?: string | null;
+    attachment?: string | ScenarioMediaAttachment | null;
   };
 }
 
@@ -39,7 +50,7 @@ export interface Scenario {
     contentType?: string;
     participants?: unknown[];
     messages?: ScenarioChatMessage[];
-    attachments?: unknown[];
+    attachments?: (ScenarioMediaAttachment | string)[];
     uiHints?: {
       chatStyle?: string;
       highlightMessageIndex?: number | null;

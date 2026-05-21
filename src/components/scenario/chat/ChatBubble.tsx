@@ -1,4 +1,5 @@
 import type { ScenarioChatMessage, Theme } from "../../../types";
+import { ScenarioAttachment } from "../media/ScenarioAttachment";
 import type { ChatStyle } from "./chatStyles";
 import { getThemedChatClasses } from "./chatStyles";
 
@@ -48,7 +49,13 @@ export const ChatBubble = ({ message, index, highlightIndex, platform, style, th
           <RoleBadge role={message.role} theme={theme} />
         </div>
 
-        <div className="break-words">{message.text}</div>
+        {message.text ? <div className="break-words">{message.text}</div> : null}
+
+        {message.meta?.attachment ? (
+          <div className="mt-3">
+            <ScenarioAttachment attachment={message.meta.attachment} theme={theme} compact />
+          </div>
+        ) : null}
 
         {isMarketplaceSeller && (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] opacity-70">
@@ -68,19 +75,13 @@ export const ChatBubble = ({ message, index, highlightIndex, platform, style, th
           </div>
         )}
 
-        {message.meta?.attachment && (
-          <div className="mt-2 break-words rounded-xl bg-black/10 px-3 py-2 text-xs">
-            Вложение: {message.meta.attachment}
-          </div>
-        )}
+        {message.time ? <div className="mt-1 text-right text-[11px] opacity-60">{message.time}</div> : null}
 
-        {message.time && <div className="mt-1 text-right text-[11px] opacity-60">{message.time}</div>}
-
-        {highlightIndex === index && (
+        {highlightIndex === index ? (
           <div className={`mt-2 rounded-xl px-3 py-2 text-xs font-semibold ${theme === "dark" ? "bg-red-950 text-red-300" : "bg-red-50 text-red-700"}`}>
             Здесь важный сигнал риска
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
