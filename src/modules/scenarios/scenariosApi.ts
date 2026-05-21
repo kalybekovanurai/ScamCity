@@ -1,10 +1,12 @@
 import { apiClient } from "../../api/client";
-import type { ContentType, Scenario, ScenarioChatMessage, ScenarioType } from "../../types";
+import type { ContentType, Scenario, ScenarioChatMessage, ScenarioMediaAttachment, ScenarioType } from "../../types";
 import { normalizeScenarioType } from "../../utils/progress";
 import { fixMojibake } from "../../utils/text";
 
 type ServerChatMessage = Omit<ScenarioChatMessage, "meta"> & {
-  meta?: ScenarioChatMessage["meta"];
+  meta?: Omit<ScenarioChatMessage["meta"], "attachment"> & {
+    attachment?: unknown;
+  };
 };
 
 export type ServerScenario = Omit<Partial<Scenario>, "content" | "options"> & {
@@ -52,6 +54,26 @@ export type ServerScenario = Omit<Partial<Scenario>, "content" | "options"> & {
 const normalizeTextRecord = (data: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(data).map(([key, value]) => [key, typeof value === "string" ? fixMojibake(value) : value]));
 
+const normalizeAttachment = (attachment: unknown): ScenarioMediaAttachment | string => {
+  if (typeof attachment === "string") return fixMojibake(attachment);
+  if (!attachment || typeof attachment !== "object") return "";
+
+  const item = attachment as Record<string, unknown>;
+  const url = item.url ?? item.src ?? item.file_url ?? item.fileUrl ?? item.audio_url ?? item.audioUrl ?? item.video_url ?? item.videoUrl;
+  const title = item.title ?? item.name ?? item.filename ?? item.file_name;
+  const type = item.type ?? item.kind ?? item.content_type ?? item.contentType;
+  const mimeType = item.mime_type ?? item.mimeType;
+
+  return {
+    url: typeof url === "string" ? fixMojibake(url) : undefined,
+    src: typeof item.src === "string" ? fixMojibake(item.src) : undefined,
+    title: typeof title === "string" ? fixMojibake(title) : undefined,
+    name: typeof item.name === "string" ? fixMojibake(item.name) : undefined,
+    type: typeof type === "string" ? fixMojibake(type) : undefined,
+    mimeType: typeof mimeType === "string" ? fixMojibake(mimeType) : undefined,
+  };
+};
+
 const normalizeMessage = (message: ServerChatMessage): ScenarioChatMessage => ({
   sender: fixMojibake(message.sender ?? ""),
   role: message.role ? fixMojibake(message.role) : undefined,
@@ -61,7 +83,7 @@ const normalizeMessage = (message: ServerChatMessage): ScenarioChatMessage => ({
     ? {
         edited: message.meta.edited,
         reply_to: message.meta.reply_to ? fixMojibake(message.meta.reply_to) : message.meta.reply_to,
-        attachment: message.meta.attachment ? fixMojibake(message.meta.attachment) : message.meta.attachment,
+        attachment: message.meta.attachment ? normalizeAttachment(message.meta.attachment) : message.meta.attachment,
       }
     : undefined,
 });
@@ -93,7 +115,7 @@ export const normalizeScenario = (scenario: ServerScenario): Scenario => {
       contentType: scenario.content?.contentType ?? scenario.content?.content_type,
       participants: scenario.content?.participants ?? [],
       messages: scenario.content?.messages?.map(normalizeMessage) ?? [],
-      attachments: scenario.content?.attachments ?? [],
+      attachments: scenario.content?.attachments?.map(normalizeAttachment).filter((attachment) => attachment !== "") ?? [],
       uiHints,
       data: contentData,
     },

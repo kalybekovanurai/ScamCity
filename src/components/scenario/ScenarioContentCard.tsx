@@ -1,6 +1,7 @@
 import { HelpCircle, ImageOff } from "lucide-react";
 import type { Scenario, Theme } from "../../types";
 import { ChatScenario } from "./chat/ChatScenario";
+import { ScenarioAttachment } from "./media/ScenarioAttachment";
 
 interface ScenarioContentCardProps {
   theme: Theme;
@@ -9,10 +10,15 @@ interface ScenarioContentCardProps {
 
 const ScenarioMedia = ({ theme, scenario }: ScenarioContentCardProps) => {
   const hasImage = scenario.image.trim().length > 0;
+  const primaryAttachment = scenario.content.attachments?.[0];
 
   return (
     <div className="h-56 overflow-hidden md:h-72">
-      {hasImage ? (
+      {primaryAttachment ? (
+        <div className="flex h-full w-full items-center justify-center p-4">
+          <ScenarioAttachment attachment={primaryAttachment} theme={theme} />
+        </div>
+      ) : hasImage ? (
         <img src={scenario.image} className="h-full w-full object-cover" alt="" />
       ) : (
         <div
@@ -61,6 +67,13 @@ const ScenarioMessage = ({ scenario, theme }: ScenarioContentCardProps) => (
         {scenario.content.data.buttonLabel}
       </span>
     )}
+    {scenario.content.attachments && scenario.content.attachments.length > 1 ? (
+      <div className="space-y-3 pt-2">
+        {scenario.content.attachments.slice(1).map((attachment, index) => (
+          <ScenarioAttachment key={index} attachment={attachment} theme={theme} />
+        ))}
+      </div>
+    ) : null}
   </div>
 );
 
