@@ -1,22 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAppDispatch } from "./hooks";
 import { APP_ROUTES, type AppRouteId } from "./router";
-import { clearGameData, loadGameData, saveGameData } from "./storage";
+import { usePlayerProgress } from "./usePlayerProgress";
 import { aiApi } from "../modules/ai";
 import { analyticsApi } from "../modules/analytics";
 import { submitAnswer } from "../modules/answers";
 import { scenariosApi } from "../modules/scenarios";
-import type { AnswersByType, CategoryProgress, Scenario, SessionResult, Theme } from "../types";
-import {
-  createEmptyAnswers,
-  createEmptyProgress,
-  getAccuracy,
-  getCurrentLevelLabel,
-  getRank,
-  getTotalCompletedLevels,
-  markSubLevelCompleted,
-  updateAnswerStats,
-} from "../utils/progress";
+import type { Scenario, SessionResult } from "../types";
+import { markSubLevelCompleted, updateAnswerStats } from "../utils/progress";
 
 const QUESTION_XP = 10;
 const LESSON_XP = 80;
@@ -30,15 +21,10 @@ const isPlayableScenario = (scenario: Scenario) =>
 
 export const useGameController = () => {
   const dispatch = useAppDispatch();
+  const player = usePlayerProgress();
   const [gameState, setGameState] = useState<AppRouteId>(APP_ROUTES.lobby.id);
-  const [theme, setTheme] = useState<Theme>("light");
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [activeSubLevel, setActiveSubLevel] = useState<number | null>(null);
-  const [xp, setXp] = useState(0);
-  const [categoryProgress, setCategoryProgress] = useState<CategoryProgress>(() => createEmptyProgress());
-  const [answers, setAnswers] = useState<AnswersByType>(() => createEmptyAnswers());
-  const [masteredQuestions, setMasteredQuestions] = useState<string[]>([]);
-
   const [currentLevelSession, setCurrentLevelSession] = useState<Scenario[]>([]);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
   const [currentSessionSource, setCurrentSessionSource] = useState<SessionSource>("regular");
@@ -49,73 +35,11 @@ export const useGameController = () => {
   const [sessionFeedback, setSessionFeedback] = useState<string | null>(null);
   const [isSessionAnalyzed, setIsSessionAnalyzed] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
-
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  const currentLevel = getCurrentLevelLabel(categoryProgress);
-  const totalCompletedLevels = getTotalCompletedLevels(categoryProgress);
-  const accuracy = getAccuracy(answers);
-
-  const stats = useMemo(
-    () => ({
-      scenariosSolved: (Object.values(answers) as { total: number }[]).reduce((total, item) => total + item.total, 0),
-      rank: getRank(totalCompletedLevels),
-      integrity: Math.min(100, 55 + totalCompletedLevels + Math.round(accuracy / 3)),
-      correctPercent: accuracy,
-      totalPoints: xp,
-    }),
-    [accuracy, answers, totalCompletedLevels, xp],
-  );
-
-  useEffect(() => {
-    const saved = loadGameData();
-    if (!saved) return;
-
-    setXp(saved.xp);
-    setTheme(saved.theme);
-    setAnswers(saved.answers);
-    setCategoryProgress(saved.categoryProgress);
-    setMasteredQuestions(saved.masteredQuestions);
-  }, []);
-
-  const persistGame = (
-    nextXp = xp,
-    nextAnswers = answers,
-    nextTheme = theme,
-    nextCategoryProgress = categoryProgress,
-    nextMasteredQuestions = masteredQuestions,
-  ) => {
-    saveGameData({
-      xp: nextXp,
-      answers: nextAnswers,
-      theme: nextTheme,
-      categoryProgress: nextCategoryProgress,
-      masteredQuestions: nextMasteredQuestions,
-    });
-  };
-
-  const handleLevelReset = () => {
-    if (!confirm("Вы уверены, что хотите сбросить весь прогресс?")) return;
-
-    const emptyProgress = createEmptyProgress();
-    const emptyAnswers = createEmptyAnswers();
-    setXp(0);
-    setCategoryProgress(emptyProgress);
-    setAnswers(emptyAnswers);
-    setMasteredQuestions([]);
-    clearGameData();
-    setGameState(APP_ROUTES.lobby.id);
-  };
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    persistGame(xp, answers, nextTheme, categoryProgress, masteredQuestions);
-  };
 
   const startScenario = (scenario: Scenario) => {
     setCurrentScenario(scenario);
@@ -139,8 +63,8 @@ export const useGameController = () => {
   };
 
   const startAdaptiveMission = async (
-    level = activeCategory ?? currentLevel.level,
-    subLevel = activeSubLevel ?? currentLevel.subLevel,
+    level = activeCategory ?? player.currentLevel.level,
+    subLevel = activeSubLevel ?? player.currentLevel.subLevel,
   ) => {
     setIsAnalyzing(true);
     setSessionError(null);
@@ -164,7 +88,7 @@ export const useGameController = () => {
   };
 
   const startChatbotSession = async () => {
-    const started = await startAdaptiveMission(currentLevel.level, currentLevel.subLevel);
+    const started = await startAdaptiveMission(player.currentLevel.level, player.currentLevel.subLevel);
     if (!started) {
       setGameState(APP_ROUTES.levels.id);
     }
@@ -216,20 +140,20 @@ export const useGameController = () => {
   const completeSessionIfNeeded = (results: SessionResult[]) => {
     const session = currentLevelSession[0];
     if (results.length === 0 || !session) {
-      persistGame(xp, answers, theme, categoryProgress, masteredQuestions);
+      player.persistGame();
       return;
     }
 
     const sessionLevel = activeCategory ?? session.level;
     const sessionSubLevel = activeSubLevel ?? session.subLevel;
-    const alreadyCompleted = categoryProgress[sessionLevel]?.includes(sessionSubLevel);
-    const nextProgress = markSubLevelCompleted(categoryProgress, sessionLevel, sessionSubLevel);
+    const alreadyCompleted = player.categoryProgress[sessionLevel]?.includes(sessionSubLevel);
+    const nextProgress = markSubLevelCompleted(player.categoryProgress, sessionLevel, sessionSubLevel);
     const lessonXp = currentSessionSource === "ai" ? AI_LESSON_XP : LESSON_XP;
-    const nextXp = alreadyCompleted ? xp : xp + lessonXp;
+    const nextXp = alreadyCompleted ? player.xp : player.xp + lessonXp;
 
-    setCategoryProgress(nextProgress);
-    setXp(nextXp);
-    persistGame(nextXp, answers, theme, nextProgress, masteredQuestions);
+    player.setCategoryProgress(nextProgress);
+    player.setXp(nextXp);
+    player.persistGame(nextXp, player.answers, player.theme, nextProgress, player.masteredQuestions);
   };
 
   const handleNextInSession = async () => {
@@ -246,8 +170,8 @@ export const useGameController = () => {
     setSelectedOption(null);
     await Promise.allSettled(answerSubmitPromisesRef.current);
 
-    const nextLevel = activeCategory ?? currentLevel.level;
-    const nextSubLevel = (activeSubLevel ?? currentLevel.subLevel) + 1;
+    const nextLevel = activeCategory ?? player.currentLevel.level;
+    const nextSubLevel = (activeSubLevel ?? player.currentLevel.subLevel) + 1;
     setActiveSubLevel(nextSubLevel);
     await startAdaptiveMission(nextLevel, nextSubLevel);
   };
@@ -260,11 +184,11 @@ export const useGameController = () => {
 
     const correctOption = currentScenario.options.find((item) => item.isCorrect) ?? option;
     const localIsCorrect = Boolean(option.isCorrect);
-    const nextAnswers = updateAnswerStats(answers, currentScenario.type, localIsCorrect);
-    const isFirstCorrect = localIsCorrect && !masteredQuestions.includes(currentScenario.id);
-    const nextMasteredQuestions = isFirstCorrect ? [...masteredQuestions, currentScenario.id] : masteredQuestions;
+    const nextAnswers = updateAnswerStats(player.answers, currentScenario.type, localIsCorrect);
+    const isFirstCorrect = localIsCorrect && !player.masteredQuestions.includes(currentScenario.id);
+    const nextMasteredQuestions = isFirstCorrect ? [...player.masteredQuestions, currentScenario.id] : player.masteredQuestions;
     const questionXp = currentSessionSource === "ai" ? AI_QUESTION_XP : QUESTION_XP;
-    const nextXp = xp + (isFirstCorrect ? questionXp : 0);
+    const nextXp = player.xp + (isFirstCorrect ? questionXp : 0);
     const nextResults = [
       ...sessionResults,
       {
@@ -279,12 +203,12 @@ export const useGameController = () => {
 
     setSelectedOption(optionId);
     setIsCorrect(localIsCorrect);
-    setAnswers(nextAnswers);
-    setMasteredQuestions(nextMasteredQuestions);
-    setXp(nextXp);
+    player.setAnswers(nextAnswers);
+    player.setMasteredQuestions(nextMasteredQuestions);
+    player.setXp(nextXp);
     sessionResultsRef.current = nextResults;
     setSessionResults(nextResults);
-    persistGame(nextXp, nextAnswers, theme, categoryProgress, nextMasteredQuestions);
+    player.persistGame(nextXp, nextAnswers, player.theme, player.categoryProgress, nextMasteredQuestions);
 
     const submitPromise = dispatch(
       submitAnswer({
@@ -309,6 +233,7 @@ export const useGameController = () => {
     if (selectedOption !== null && isLastQuestion) {
       completeSessionIfNeeded(sessionResultsRef.current);
     }
+
     setShowSessionSummary(false);
     setIsCorrect(null);
     setSelectedOption(null);
@@ -318,12 +243,19 @@ export const useGameController = () => {
     setGameState(APP_ROUTES.levels.id);
   };
 
+  const handleLevelReset = () => {
+    if (!confirm("Вы уверены, что хотите сбросить весь прогресс?")) return;
+
+    player.resetProgress();
+    setGameState(APP_ROUTES.lobby.id);
+  };
+
   return {
     activeCategory,
-    answers,
-    categoryProgress,
+    answers: player.answers,
+    categoryProgress: player.categoryProgress,
     closeSessionSummary,
-    currentLevel,
+    currentLevel: player.currentLevel,
     currentLevelSession,
     currentScenario,
     currentScenarioIndex,
@@ -346,9 +278,9 @@ export const useGameController = () => {
     showSettings,
     startLevelSession,
     startChatbotSession,
-    stats,
-    theme,
-    toggleTheme,
-    xp,
+    stats: player.stats,
+    theme: player.theme,
+    toggleTheme: player.toggleTheme,
+    xp: player.xp,
   };
 };

@@ -45,7 +45,7 @@ export const AnswerFeedbackModal = ({
   const levelNumber = scenario.subLevel;
   const nextLabel = isAdaptiveSession ? "Следующая миссия" : isLastQuestion ? "Следующий уровень" : "Следующий вопрос";
   const modalSize = isLastQuestion
-    ? "max-w-lg p-5 text-center sm:p-6 lg:max-w-2xl lg:p-6"
+    ? "max-w-[30rem] p-5 text-center sm:p-6 lg:max-w-[31rem] lg:p-6"
     : "max-w-lg p-6 text-center md:p-8";
 
   return (
@@ -56,18 +56,18 @@ export const AnswerFeedbackModal = ({
       contentClassName={isLastQuestion ? "lg:max-h-none lg:overflow-visible" : ""}
     >
       <div
-        className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl sm:h-20 sm:w-20 ${
+        className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl sm:h-[4.5rem] sm:w-[4.5rem] ${
           correct ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
         }`}
       >
-        {correct ? <CheckCircle2 className="h-9 w-9 sm:h-10 sm:w-10" /> : <XCircle className="h-9 w-9 sm:h-10 sm:w-10" />}
+        {correct ? <CheckCircle2 className="h-9 w-9" /> : <XCircle className="h-9 w-9" />}
       </div>
 
       <h4 className="mb-3 text-2xl font-black">{correct ? "Верно" : "Почти"}</h4>
 
       {feedback ? (
         <p
-          className={`mb-4 rounded-2xl p-3 text-sm font-semibold leading-relaxed sm:p-4 sm:text-base ${
+          className={`mb-4 rounded-2xl p-3 text-sm font-semibold leading-relaxed ${
             theme === "dark" ? "bg-slate-800 text-slate-100" : "bg-slate-50 text-slate-700"
           }`}
         >
@@ -89,11 +89,7 @@ export const AnswerFeedbackModal = ({
       ) : null}
 
       {isLastQuestion ? (
-        <div
-          className={`mb-5 grid gap-3 rounded-2xl p-4 text-left lg:grid-cols-[0.85fr_1.15fr] ${
-            theme === "dark" ? "bg-slate-800 text-slate-200" : "bg-violet-50 text-violet-900"
-          }`}
-        >
+        <div className={`mb-5 space-y-3 rounded-2xl p-4 text-left ${theme === "dark" ? "bg-slate-800 text-slate-200" : "bg-violet-50 text-violet-900"}`}>
           <div>
             <p className="text-sm font-bold">Уровень {levelNumber} пройден</p>
             <p className="mt-1 text-sm opacity-80">
@@ -116,7 +112,7 @@ export const AnswerFeedbackModal = ({
         </div>
       )}
 
-      <div className={isLastQuestion ? "grid gap-3 sm:grid-cols-2" : "space-y-3"}>
+      <div className="space-y-3">
         {isLastQuestion ? (
           <Button onClick={onBackToLevels} fullWidth variant="ghost" disabled={isLoadingNext}>
             К уровням

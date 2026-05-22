@@ -1,0 +1,157 @@
+import type { ContentType, Scenario, ScenarioChatMessage, ScenarioMediaAttachment } from "../../types";
+import { normalizeScenarioType } from "../../utils/progress";
+import { fixMojibake } from "../../utils/text";
+
+type ServerChatMessage = Omit<ScenarioChatMessage, "meta"> & {
+  attachment?: unknown;
+  attachments?: unknown[];
+  meta?: {
+    edited?: boolean;
+    reply_to?: string | null;
+    attachment?: unknown;
+  };
+};
+
+export type ServerScenario = Omit<Partial<Scenario>, "content" | "options"> & {
+  id: string | number;
+  lvl?: number;
+  sub_level?: number;
+  is_scam?: boolean;
+  scenario_mode?: string;
+  correct_option_id?: string | number;
+  correctOptionId?: string | number;
+  correct_option?: string | number;
+  feedback?: string;
+  verification_methods?: string[];
+  content?: {
+    type?: ContentType;
+    data?: Record<string, unknown>;
+    platform?: string;
+    content_type?: string;
+    contentType?: string;
+    participants?: unknown[];
+    messages?: ServerChatMessage[];
+    attachments?: unknown[];
+    ui_hints?: {
+      chat_style?: string;
+      highlight_message_index?: number | null;
+    };
+    uiHints?: Scenario["content"]["uiHints"];
+  };
+  options?: {
+    id?: string | number;
+    option_id?: string | number;
+    optionId?: string | number;
+    text?: string;
+    label?: string;
+    title?: string;
+    action_type?: string;
+    actionType?: string;
+    isCorrect?: boolean;
+    is_correct?: boolean;
+    correct?: boolean;
+    feedback?: string;
+  }[];
+};
+
+const DEFAULT_RISK_FEEDBACK =
+  "Это рискованное действие. Сначала проверьте источник и детали сообщения.";
+
+const normalizeTextRecord = (data: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(data).map(([key, value]) => [key, typeof value === "string" ? fixMojibake(value) : value]));
+
+export const normalizeAttachment = (attachment: unknown): ScenarioMediaAttachment | string => {
+  if (typeof attachment === "string") return fixMojibake(attachment);
+  if (!attachment || typeof attachment !== "object") return "";
+
+  const item = attachment as Record<string, unknown>;
+  const url = item.url ?? item.src ?? item.file_url ?? item.fileUrl ?? item.audio_url ?? item.audioUrl ?? item.video_url ?? item.videoUrl;
+  const title = item.title ?? item.name ?? item.filename ?? item.file_name;
+  const type = item.type ?? item.kind ?? item.content_type ?? item.contentType;
+  const mimeType = item.mime_type ?? item.mimeType;
+  const duration = item.duration ?? item.length;
+
+  return {
+    url: typeof url === "string" ? fixMojibake(url) : undefined,
+    src: typeof item.src === "string" ? fixMojibake(item.src) : undefined,
+    title: typeof title === "string" ? fixMojibake(title) : undefined,
+    name: typeof item.name === "string" ? fixMojibake(item.name) : undefined,
+    type: typeof type === "string" ? fixMojibake(type) : undefined,
+    mimeType: typeof mimeType === "string" ? fixMojibake(mimeType) : undefined,
+    duration: typeof duration === "string" ? fixMojibake(duration) : undefined,
+  };
+};
+
+const normalizeMessage = (message: ServerChatMessage): ScenarioChatMessage => ({
+  sender: fixMojibake(message.sender ?? ""),
+  role: message.role ? fixMojibake(message.role) : undefined,
+  text: message.text ? fixMojibake(message.text) : undefined,
+  time: message.time ? fixMojibake(message.time) : undefined,
+  attachment:
+    message.attachment === null || message.attachment === undefined
+      ? message.attachment
+      : normalizeAttachment(message.attachment),
+  attachments: message.attachments?.map(normalizeAttachment).filter((attachment) => attachment !== ""),
+  meta: message.meta || message.attachment
+    ? {
+        edited: message.meta?.edited,
+        reply_to: message.meta?.reply_to ? fixMojibake(message.meta.reply_to) : message.meta?.reply_to,
+        attachment:
+          message.meta?.attachment === null
+            ? null
+            : normalizeAttachment(message.meta?.attachment ?? message.attachment),
+      }
+    : undefined,
+});
+
+export const normalizeScenario = (scenario: ServerScenario): Scenario => {
+  const correctOptionId = scenario.correct_option_id ?? scenario.correctOptionId ?? scenario.correct_option;
+  const normalizedCorrectOptionId = correctOptionId !== undefined && correctOptionId !== null ? String(correctOptionId) : null;
+  const contentData = normalizeTextRecord(scenario.content?.data ?? {});
+  const uiHints = scenario.content?.uiHints ?? {
+    chatStyle: scenario.content?.ui_hints?.chat_style,
+    highlightMessageIndex: scenario.content?.ui_hints?.highlight_message_index,
+  };
+
+  return {
+    id: String(scenario.id),
+    level: scenario.level ?? scenario.lvl ?? 1,
+    subLevel: scenario.subLevel ?? scenario.sub_level ?? 1,
+    type: normalizeScenarioType(scenario.type),
+    title: fixMojibake(scenario.title ?? ""),
+    description: fixMojibake(scenario.description ?? ""),
+    image: scenario.image ?? "",
+    difficulty: scenario.difficulty ? fixMojibake(scenario.difficulty) : undefined,
+    category: scenario.category ? fixMojibake(scenario.category) : undefined,
+    isScam: scenario.isScam ?? scenario.is_scam,
+    scenarioMode: scenario.scenarioMode ?? scenario.scenario_mode,
+    content: {
+      type: scenario.content?.type ?? "message",
+      platform: scenario.content?.platform ? fixMojibake(scenario.content.platform) : undefined,
+      contentType: scenario.content?.contentType ?? scenario.content?.content_type,
+      participants: scenario.content?.participants ?? [],
+      messages: scenario.content?.messages?.map(normalizeMessage) ?? [],
+      attachments: scenario.content?.attachments?.map(normalizeAttachment).filter((attachment) => attachment !== "") ?? [],
+      uiHints,
+      data: contentData,
+    },
+    options: (scenario.options ?? []).map((option, index) => {
+      const rawOptionId = option.id ?? option.option_id ?? option.optionId ?? index + 1;
+      const optionId = String(rawOptionId);
+      const isCorrect = option.isCorrect ?? option.is_correct ?? option.correct ?? optionId === normalizedCorrectOptionId;
+      const text = option.text ?? option.label ?? option.title ?? `Вариант ${index + 1}`;
+
+      return {
+        id: optionId,
+        text: fixMojibake(text),
+        actionType: option.actionType ?? option.action_type,
+        isCorrect,
+        feedback: fixMojibake(option.feedback ?? (isCorrect ? scenario.feedback ?? "" : DEFAULT_RISK_FEEDBACK)),
+      };
+    }),
+    explanation: fixMojibake(scenario.explanation ?? scenario.feedback ?? ""),
+    verificationMethods: (scenario.verificationMethods ?? scenario.verification_methods)?.map(fixMojibake),
+  };
+};
+
+export const normalizeScenarios = (scenarios: ServerScenario[]) => scenarios.map(normalizeScenario);

@@ -9,7 +9,7 @@ export type ScenarioType =
 
 export type ContentType = "email" | "message" | "website" | "video" | "audio" | "ad";
 
-export type MediaKind = "image" | "audio" | "video" | "file";
+export type MediaKind = "image" | "audio" | "voice" | "video" | "file";
 
 export interface ScenarioMediaAttachment {
   type?: MediaKind | string;
@@ -18,13 +18,16 @@ export interface ScenarioMediaAttachment {
   title?: string;
   name?: string;
   mimeType?: string;
+  duration?: string;
 }
 
 export interface ScenarioChatMessage {
   sender: string;
   role?: string;
-  text: string;
+  text?: string;
   time?: string;
+  attachment?: string | ScenarioMediaAttachment | null;
+  attachments?: (string | ScenarioMediaAttachment)[];
   meta?: {
     edited?: boolean;
     reply_to?: string | null;

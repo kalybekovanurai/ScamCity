@@ -12,7 +12,35 @@ interface ChatScenarioProps {
 export const ChatScenario = ({ scenario, theme }: ChatScenarioProps) => {
   const [visibleMessages, setVisibleMessages] = useState<ScenarioChatMessage[]>([]);
   const [typingSender, setTypingSender] = useState<string | null>(null);
-  const messages = scenario.content.messages ?? [];
+  const messages = useMemo(() => {
+    const rawMessages = scenario.content.messages ?? [];
+    const mediaAttachments = (scenario.content.attachments ?? []).filter((attachment) => {
+      if (typeof attachment === "string") return /\.(mp3|mpeg|wav|m4a|aac|ogg|webm|mp4|mov)(\?|#|$)/i.test(attachment);
+      const type = `${attachment.type ?? ""} ${attachment.mimeType ?? ""}`.toLowerCase();
+      const url = `${attachment.url ?? attachment.src ?? ""}`.toLowerCase();
+
+      return type.includes("voice") || type.includes("audio") || type.includes("video") || /\.(mp3|mpeg|wav|m4a|aac|ogg|webm|mp4|mov)(\?|#|$)/i.test(url);
+    });
+
+    let fallbackAttachmentIndex = 0;
+
+    return rawMessages.map((message) => {
+      if (message.meta?.attachment) return message;
+      if (message.role === "user") return message;
+
+      const fallbackAttachment = mediaAttachments[fallbackAttachmentIndex];
+      if (!fallbackAttachment) return message;
+
+      fallbackAttachmentIndex += 1;
+      return {
+        ...message,
+        meta: {
+          ...message.meta,
+          attachment: fallbackAttachment,
+        },
+      };
+    });
+  }, [scenario.content.attachments, scenario.content.messages]);
   const style = useMemo(
     () => getChatStyle(scenario.content.uiHints?.chatStyle, scenario.content.platform),
     [scenario.content.platform, scenario.content.uiHints?.chatStyle],

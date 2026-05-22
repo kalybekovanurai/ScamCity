@@ -63,7 +63,16 @@ export default function App() {
             />
           )}
 
-          {game.gameState === APP_ROUTES.profile.id && <ProfileView theme={game.theme} setShowSettings={game.setShowSettings} />}
+          {game.gameState === APP_ROUTES.profile.id && (
+            <ProfileView
+              theme={game.theme}
+              xp={game.xp}
+              currentLevel={game.currentLevel}
+              stats={game.stats}
+              setShowSettings={game.setShowSettings}
+              onResetProgress={game.handleLevelReset}
+            />
+          )}
 
           {game.gameState === APP_ROUTES.scenario.id && game.currentScenario && (
             <ScenarioView

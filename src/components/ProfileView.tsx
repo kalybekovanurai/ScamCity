@@ -2,42 +2,30 @@ import React from "react";
 import { motion } from "motion/react";
 import { RotateCcw, Settings, Shield, User } from "lucide-react";
 import type { Theme } from "../types";
-import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { fetchMyProgress, selectMyProgress, selectProgressError } from "../modules/progress";
-import { resetProgressLocal } from "../modules/progress/progressSlice";
 
 interface ProfileViewProps {
   theme: Theme;
+  xp: number;
+  currentLevel: { level: number; subLevel: number };
+  stats: {
+    rank: string;
+    correctPercent: number;
+  };
   setShowSettings: (val: boolean) => void;
+  onResetProgress: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ theme, setShowSettings }) => {
-  const dispatch = useAppDispatch();
-  const progress = useAppSelector(selectMyProgress);
-  const error = useAppSelector(selectProgressError);
-
-  React.useEffect(() => {
-    dispatch(fetchMyProgress());
-  }, [dispatch]);
-
-  const xp = progress?.xp ?? 0;
-  const level = progress?.categoryProgress ? Math.max(...Object.keys(progress.categoryProgress).map(Number), 1) : 1;
-  const subLevel = progress?.categoryProgress?.[level]?.length ?? 1;
-  const totalAnswers = progress?.answers ? Object.values(progress.answers).reduce((sum, stats) => sum + stats.total, 0) : 0;
-  const correctAnswers = progress?.answers ? Object.values(progress.answers).reduce((sum, stats) => sum + stats.correct, 0) : 0;
-  const correctPercent = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
-
-  const getRank = (lvl: number): string => {
-    if (lvl <= 1) return "Новичок";
-    if (lvl <= 2) return "Помощник";
-    if (lvl <= 3) return "Оперативник";
-    if (lvl <= 4) return "Старший агент";
-    return "Директор";
-  };
-
-  if (error) {
-    return <div className="py-10 text-center font-bold text-rose-500">{error}</div>;
-  }
+export const ProfileView: React.FC<ProfileViewProps> = ({
+  theme,
+  xp,
+  currentLevel,
+  stats,
+  setShowSettings,
+  onResetProgress,
+}) => {
+  const level = currentLevel.level;
+  const subLevel = currentLevel.subLevel;
+  const correctPercent = Number.isFinite(stats.correctPercent) ? stats.correctPercent : 0;
 
   return (
     <motion.div
@@ -63,7 +51,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ theme, setShowSettings
             <User className={`h-14 w-14 sm:h-16 sm:w-16 ${theme === "dark" ? "text-slate-600" : "text-slate-400"}`} />
           </div>
 
-          <div className={`absolute -bottom-2 -right-2 rounded-xl bg-violet-600 p-3 text-white shadow-lg border-4 ${theme === "dark" ? "border-slate-900" : "border-white"}`}>
+          <div className={`absolute -bottom-2 -right-2 rounded-xl border-4 bg-violet-600 p-3 text-white shadow-lg ${theme === "dark" ? "border-slate-900" : "border-white"}`}>
             <Shield className="h-5 w-5" />
           </div>
         </div>
@@ -85,7 +73,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ theme, setShowSettings
             </div>
 
             <p className={`text-[9px] font-black uppercase tracking-widest ${theme === "dark" ? "text-slate-600" : "text-slate-400"}`}>
-              {getRank(level)} · урок {level}-{subLevel}
+              {stats.rank} · урок {level}-{subLevel}
             </p>
           </div>
         </div>
@@ -106,6 +94,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ theme, setShowSettings
 
         <div className="relative z-10 space-y-3 sm:space-y-4">
           <button
+            type="button"
             onClick={() => setShowSettings(true)}
             className="flex w-full items-center justify-center gap-3 rounded-3xl bg-violet-600 py-4 text-xs font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-violet-900/10 transition-all hover:bg-violet-500 active:scale-95 sm:py-5 sm:tracking-[0.3em]"
           >
@@ -114,7 +103,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ theme, setShowSettings
           </button>
 
           <button
-            onClick={() => dispatch(resetProgressLocal())}
+            type="button"
+            onClick={onResetProgress}
             className={`flex w-full items-center justify-center gap-3 rounded-3xl border py-4 text-xs font-black uppercase tracking-[0.2em] transition-all sm:py-5 sm:tracking-[0.3em] ${
               theme === "dark"
                 ? "border-slate-700 bg-slate-800 text-rose-400 hover:border-rose-500/50 hover:bg-rose-500/10"
