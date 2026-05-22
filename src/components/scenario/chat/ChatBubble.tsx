@@ -1,4 +1,4 @@
-import type { ScenarioChatMessage, Theme } from "../../../types";
+import type { ScenarioChatMessage, ScenarioMediaAttachment, Theme } from "../../../types";
 import { ScenarioAttachment } from "../media/ScenarioAttachment";
 import type { ChatStyle } from "./chatStyles";
 import { getThemedChatClasses } from "./chatStyles";
@@ -14,6 +14,7 @@ interface ChatBubbleProps {
 
 const roleLabels: Record<string, { label: string; className: string; darkClassName: string }> = {
   friend: { label: "online", className: "bg-green-100 text-green-700", darkClassName: "bg-green-950 text-green-300" },
+  relative: { label: "родные", className: "bg-pink-100 text-pink-700", darkClassName: "bg-pink-950 text-pink-300" },
   student: { label: "студент", className: "bg-indigo-100 text-indigo-700", darkClassName: "bg-indigo-950 text-indigo-300" },
   seller: { label: "продавец", className: "bg-orange-100 text-orange-700", darkClassName: "bg-orange-950 text-orange-300" },
   hr_manager: { label: "HR", className: "bg-blue-100 text-blue-700", darkClassName: "bg-blue-950 text-blue-300" },
@@ -30,12 +31,23 @@ const RoleBadge = ({ role, theme }: { role?: string; theme: Theme }) => {
   );
 };
 
+const getMessageAttachments = (message: ScenarioChatMessage): (string | ScenarioMediaAttachment)[] => {
+  const attachments: (string | ScenarioMediaAttachment)[] = [];
+
+  if (message.meta?.attachment) attachments.push(message.meta.attachment);
+  if (message.attachment) attachments.push(message.attachment);
+  if (message.attachments?.length) attachments.push(...message.attachments);
+
+  return attachments;
+};
+
 export const ChatBubble = ({ message, index, highlightIndex, platform, style, theme }: ChatBubbleProps) => {
   const themed = getThemedChatClasses(style, theme);
-  const isUser = message.sender === "Вы";
+  const isUser = message.sender === "Вы" || message.role === "user";
   const isMarketplaceSeller = platform?.toLowerCase() === "marketplace" && message.role === "seller";
   const isSecurityNotification = message.role === "security_service";
   const showDangerGlow = highlightIndex === index;
+  const attachments = getMessageAttachments(message);
 
   return (
     <div className={`flex animate-[fadeIn_0.25s_ease-out] ${isUser ? "justify-end" : "justify-start"}`}>
@@ -49,11 +61,13 @@ export const ChatBubble = ({ message, index, highlightIndex, platform, style, th
           <RoleBadge role={message.role} theme={theme} />
         </div>
 
-        {message.text ? <div className="break-words">{message.text}</div> : null}
+        {message.text ? <div className="break-words text-sm leading-relaxed">{message.text}</div> : null}
 
-        {message.meta?.attachment ? (
-          <div className="mt-3">
-            <ScenarioAttachment attachment={message.meta.attachment} theme={theme} compact />
+        {attachments.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {attachments.map((attachment, attachmentIndex) => (
+              <ScenarioAttachment key={attachmentIndex} attachment={attachment} theme={theme} compact />
+            ))}
           </div>
         ) : null}
 

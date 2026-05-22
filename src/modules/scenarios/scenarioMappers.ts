@@ -3,7 +3,11 @@ import { normalizeScenarioType } from "../../utils/progress";
 import { fixMojibake } from "../../utils/text";
 
 type ServerChatMessage = Omit<ScenarioChatMessage, "meta"> & {
-  meta?: Omit<ScenarioChatMessage["meta"], "attachment"> & {
+  attachment?: unknown;
+  attachments?: unknown[];
+  meta?: {
+    edited?: boolean;
+    reply_to?: string | null;
     attachment?: unknown;
   };
 };
@@ -65,6 +69,7 @@ export const normalizeAttachment = (attachment: unknown): ScenarioMediaAttachmen
   const title = item.title ?? item.name ?? item.filename ?? item.file_name;
   const type = item.type ?? item.kind ?? item.content_type ?? item.contentType;
   const mimeType = item.mime_type ?? item.mimeType;
+  const duration = item.duration ?? item.length;
 
   return {
     url: typeof url === "string" ? fixMojibake(url) : undefined,
@@ -73,19 +78,28 @@ export const normalizeAttachment = (attachment: unknown): ScenarioMediaAttachmen
     name: typeof item.name === "string" ? fixMojibake(item.name) : undefined,
     type: typeof type === "string" ? fixMojibake(type) : undefined,
     mimeType: typeof mimeType === "string" ? fixMojibake(mimeType) : undefined,
+    duration: typeof duration === "string" ? fixMojibake(duration) : undefined,
   };
 };
 
 const normalizeMessage = (message: ServerChatMessage): ScenarioChatMessage => ({
   sender: fixMojibake(message.sender ?? ""),
   role: message.role ? fixMojibake(message.role) : undefined,
-  text: fixMojibake(message.text ?? ""),
+  text: message.text ? fixMojibake(message.text) : undefined,
   time: message.time ? fixMojibake(message.time) : undefined,
-  meta: message.meta
+  attachment:
+    message.attachment === null || message.attachment === undefined
+      ? message.attachment
+      : normalizeAttachment(message.attachment),
+  attachments: message.attachments?.map(normalizeAttachment).filter((attachment) => attachment !== ""),
+  meta: message.meta || message.attachment
     ? {
-        edited: message.meta.edited,
-        reply_to: message.meta.reply_to ? fixMojibake(message.meta.reply_to) : message.meta.reply_to,
-        attachment: message.meta.attachment ? normalizeAttachment(message.meta.attachment) : message.meta.attachment,
+        edited: message.meta?.edited,
+        reply_to: message.meta?.reply_to ? fixMojibake(message.meta.reply_to) : message.meta?.reply_to,
+        attachment:
+          message.meta?.attachment === null
+            ? null
+            : normalizeAttachment(message.meta?.attachment ?? message.attachment),
       }
     : undefined,
 });

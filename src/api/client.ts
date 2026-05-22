@@ -8,6 +8,7 @@ const fallbackApiBaseUrl = configuredApiBaseUrl || "https://nonfissile-pomaceous
 
 export const API_BASE_URL =
   configuredApiUrl || (import.meta.env.DEV ? "" : fallbackApiBaseUrl);
+export const API_MEDIA_BASE_URL = configuredApiUrl || fallbackApiBaseUrl;
 
 export const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
