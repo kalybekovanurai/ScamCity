@@ -62,9 +62,10 @@ export const useGameController = () => {
     startScenario(scenarios[0]);
   };
 
-  const startAdaptiveMission = async (
+  const startGeneratedMission = async (
     level = activeCategory ?? player.currentLevel.level,
     subLevel = activeSubLevel ?? player.currentLevel.subLevel,
+    source: SessionSource = "ai",
   ) => {
     setIsAnalyzing(true);
     setSessionError(null);
@@ -74,13 +75,39 @@ export const useGameController = () => {
     try {
       const scenario = await aiApi.generateScenario();
       if (!isPlayableScenario(scenario)) {
-        throw new Error("Adaptive scenario is incomplete");
+        throw new Error("Generated scenario is incomplete");
       }
 
-      prepareSession([{ ...scenario, level, subLevel }], "ai");
+      prepareSession([{ ...scenario, level, subLevel }], source);
       return true;
     } catch {
-      setSessionError("Не удалось открыть адаптивную миссию. Попробуйте еще раз чуть позже.");
+      setSessionError("Не удалось открыть миссию. Попробуйте еще раз чуть позже.");
+      return false;
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const startDiagnosticSession = async (level: number, subLevel: number) => {
+    setIsAnalyzing(true);
+    setSessionError(null);
+    setIsCorrect(null);
+    setSelectedOption(null);
+
+    try {
+      const scenarios = await scenariosApi.getScenariosByLevel(level);
+      const playableScenarios = scenarios
+        .filter(isPlayableScenario)
+        .map((scenario) => ({ ...scenario, level, subLevel }));
+
+      if (playableScenarios.length === 0) {
+        throw new Error("Diagnostic level has no playable scenarios");
+      }
+
+      prepareSession(playableScenarios, "regular");
+      return true;
+    } catch {
+      setSessionError("Не удалось открыть диагностический уровень. Проверьте сервер и попробуйте еще раз.");
       return false;
     } finally {
       setIsAnalyzing(false);
@@ -88,7 +115,7 @@ export const useGameController = () => {
   };
 
   const startChatbotSession = async () => {
-    const started = await startAdaptiveMission(player.currentLevel.level, player.currentLevel.subLevel);
+    const started = await startGeneratedMission(player.currentLevel.level, player.currentLevel.subLevel, "ai");
     if (!started) {
       setGameState(APP_ROUTES.levels.id);
     }
@@ -98,26 +125,12 @@ export const useGameController = () => {
     setActiveCategory(level);
     setActiveSubLevel(subLevel);
 
-    if (subLevel > 1) {
-      await startAdaptiveMission(level, subLevel);
+    if (subLevel === 1) {
+      await startDiagnosticSession(level, subLevel);
       return;
     }
 
-    try {
-      setSessionError(null);
-      const levelScenarios = (await scenariosApi.getScenariosByLevel(level)).filter(isPlayableScenario);
-      const exactSubLevelScenarios = levelScenarios.filter((scenario) => scenario.subLevel === subLevel);
-      const scenarios = exactSubLevelScenarios.length > 0 ? exactSubLevelScenarios : levelScenarios;
-
-      if (scenarios.length === 0) {
-        setSessionError("Для первого уровня пока нет вопросов на сервере.");
-        return;
-      }
-
-      prepareSession(scenarios.map((scenario) => ({ ...scenario, level, subLevel })), "regular");
-    } catch {
-      setSessionError("Не удалось загрузить вопросы первого уровня с сервера.");
-    }
+    await startGeneratedMission(level, subLevel, "ai");
   };
 
   const analyzeSession = async (results: SessionResult[]) => {
@@ -173,7 +186,7 @@ export const useGameController = () => {
     const nextLevel = activeCategory ?? player.currentLevel.level;
     const nextSubLevel = (activeSubLevel ?? player.currentLevel.subLevel) + 1;
     setActiveSubLevel(nextSubLevel);
-    await startAdaptiveMission(nextLevel, nextSubLevel);
+    await startGeneratedMission(nextLevel, nextSubLevel, "ai");
   };
 
   const handleOptionSelect = (optionId: string) => {
