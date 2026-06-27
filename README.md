@@ -32,40 +32,37 @@
 
 ## Скриншоты
 
-Добавьте скриншоты в папку `docs/screenshots/` и обновите ссылки ниже.
+### Главная страница
 
-```md
-![Главная страница](docs/screenshots/home.png)
-![Уровни](docs/screenshots/levels.png)
-![Сценарий](docs/screenshots/scenario.png)
-![Результат миссии](docs/screenshots/result.png)
-```
+![Главная страница ScamCity](docs/screenshots/01-home.png)
 
-Рекомендуемые скриншоты:
+### Категории миссий
 
-- главная страница с фоном города;
-- страница миссий с цепочкой уровней;
-- первый диагностический quiz;
-- AI/adaptive сценарий в формате чата;
-- модалка результата с XP и анализом;
-- профиль и прогресс пользователя.
+![Категории миссий](docs/screenshots/02-missions-top.png)
 
-## GIF или видео
+![Закрытые категории миссий](docs/screenshots/03-missions-locked.png)
 
-Добавьте короткую демонстрацию в папку `docs/demo/`:
+### Цепочка уровней
 
-```md
-![ScamCity demo](docs/demo/scamcity-demo.gif)
-```
+![Цепочка уровней](docs/screenshots/04-level-path.png)
 
-Что показать в демо:
+### AI/deepfake сценарий с голосовыми сообщениями
 
-1. Открытие главной страницы.
-2. Запуск первой диагностической миссии.
-3. Ответ на несколько вопросов.
-4. Модалка результата.
-5. Переход к следующей адаптивной миссии.
-6. Обновление XP/прогресса.
+![Сценарий с голосовым сообщением](docs/screenshots/05-voice-scenario.png)
+
+### Выбор ответа в миссии
+
+![Панель ответов](docs/screenshots/06-answer-panel.png)
+
+### Центр прогресса
+
+![Центр прогресса](docs/screenshots/07-progress-center.png)
+
+![Прогресс по категориям](docs/screenshots/08-category-progress.png)
+
+### Профиль
+
+![Профиль пользователя](docs/screenshots/09-profile.png)
 
 ## Реализованные функции
 
