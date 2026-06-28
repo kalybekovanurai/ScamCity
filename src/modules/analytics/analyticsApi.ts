@@ -1,4 +1,5 @@
-import { apiClient } from "../../api/client";
+﻿import { apiClient } from "../../api/client";
+import { demoAnalytics, isDemoMode } from "../../data/demoData";
 import { fixMojibake } from "../../utils/text";
 import type { UserAnalytics } from "./types";
 
@@ -59,7 +60,13 @@ const normalizeAnalytics = (data: AnalyticsResponse): UserAnalytics => {
 
 export const analyticsApi = {
   async getMyAnalytics() {
-    const { data } = await apiClient.get<AnalyticsResponse>("/api/analytics/me");
-    return normalizeAnalytics(data);
+    if (isDemoMode()) return normalizeAnalytics(demoAnalytics);
+
+    try {
+      const { data } = await apiClient.get<AnalyticsResponse>("/api/analytics/me");
+      return normalizeAnalytics(data);
+    } catch {
+      return normalizeAnalytics(demoAnalytics);
+    }
   },
 };

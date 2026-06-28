@@ -1,4 +1,5 @@
-import { apiClient } from "../../api/client";
+﻿import { apiClient } from "../../api/client";
+import { getDemoAnswer, isDemoMode } from "../../data/demoData";
 import { fixMojibake } from "../../utils/text";
 import type { ServerSubmitAnswerResponse, SubmitAnswerBody, SubmitAnswerPayload, SubmitAnswerResponse } from "./types";
 
@@ -20,7 +21,16 @@ export const answersApi = {
       option_id: Number(optionId),
       time_spent: timeSpent,
     };
-    const { data } = await apiClient.post<ServerSubmitAnswerResponse>(`/api/scenarios/${scenarioId}/answer`, body);
-    return normalizeSubmitAnswer(data, { scenarioId, optionId });
+
+    if (isDemoMode()) {
+      return normalizeSubmitAnswer(getDemoAnswer(scenarioId, optionId), { scenarioId, optionId });
+    }
+
+    try {
+      const { data } = await apiClient.post<ServerSubmitAnswerResponse>(`/api/scenarios/${scenarioId}/answer`, body);
+      return normalizeSubmitAnswer(data, { scenarioId, optionId });
+    } catch {
+      return normalizeSubmitAnswer(getDemoAnswer(scenarioId, optionId), { scenarioId, optionId });
+    }
   },
 };

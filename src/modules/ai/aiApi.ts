@@ -1,4 +1,5 @@
-import { apiClient } from "../../api/client";
+﻿import { apiClient } from "../../api/client";
+import { demoAdaptiveScenario, isDemoMode } from "../../data/demoData";
 import type { Scenario } from "../../types";
 import { normalizeScenario, type ServerScenario } from "../scenarios";
 import type { AiScenarioResponse } from "./types";
@@ -16,15 +17,28 @@ const getScenarioFromResponse = (data: AiScenarioResponse): ServerScenario => {
 };
 
 const normalizeAiScenario = (data: AiScenarioResponse): Scenario => normalizeScenario(getScenarioFromResponse(data));
+const getDemoAiScenario = () => normalizeScenario(demoAdaptiveScenario);
 
 export const aiApi = {
   async generateScenario() {
-    const { data } = await apiClient.post<AiScenarioResponse>("/api/ai/generate-scenario");
-    return normalizeAiScenario(data);
+    if (isDemoMode()) return getDemoAiScenario();
+
+    try {
+      const { data } = await apiClient.post<AiScenarioResponse>("/api/ai/generate-scenario");
+      return normalizeAiScenario(data);
+    } catch {
+      return getDemoAiScenario();
+    }
   },
 
   async getNextScenario() {
-    const { data } = await apiClient.get<AiScenarioResponse>("/api/ai/next-scenario");
-    return normalizeAiScenario(data);
+    if (isDemoMode()) return getDemoAiScenario();
+
+    try {
+      const { data } = await apiClient.get<AiScenarioResponse>("/api/ai/next-scenario");
+      return normalizeAiScenario(data);
+    } catch {
+      return getDemoAiScenario();
+    }
   },
 };
